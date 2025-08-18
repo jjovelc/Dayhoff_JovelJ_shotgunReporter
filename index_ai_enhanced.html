@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microbiome Analysis Results - AI Enhanced</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 300px;
+            background-color: #1E5D96;
+            color: white;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        .sidebar h1 {
+            font-size: 24px;
+            margin-bottom: 30px;
+            text-align: center;
+            border-bottom: 2px solid #A4A6A6;
+            padding-bottom: 10px;
+        }
+
+        .dropdown-group {
+            margin-bottom: 25px;
+        }
+
+        .dropdown-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #ecf0f1;
+        }
+
+        .dropdown-group select {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4675b0;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .dropdown-group select:focus {
+            outline: none;
+            box-shadow: 0 0 5px #2c64f6;
+        }
+
+        .dropdown-group select option {
+            background-color: #1358ae;
+            color: white;
+            padding: 10px;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            background-color: white;
+        }
+
+        .content-header {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .content-header h2 {
+            color: #2c3e50;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .content-header p {
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+
+        .results-area {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 30px;
+            min-height: 400px;
+            border: 2px dashed #bdc3c7;
+        }
+
+        .results-area.empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #95a5a6;
+            font-size: 18px;
+        }
+
+        .image-container {
+            text-align: center;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .image-container h3 {
+            margin: 15px 0;
+            color: #2c3e50;
+        }
+
+        /* AI Explanation Button Styles */
+        .ai-explanation-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .ai-explanation-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .ai-explanation-btn:active {
+            transform: translateY(0);
+        }
+
+        .ai-explanation-btn.loading {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+
+        /* Modal Styles */
+        .ai-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .ai-modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ai-modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ai-modal-header h3 {
+            margin: 0;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ai-modal-close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+        }
+
+        .ai-modal-close:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+
+        .ai-modal-body {
+            padding: 25px;
+            line-height: 1.6;
+        }
+
+        .ai-explanation-content {
+            background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .ai-explanation-content h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ai-explanation-content p {
+            color: #34495e;
+            margin-bottom: 12px;
+        }
+
+        .ai-explanation-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .ai-loading {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+
+        .ai-loading .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .stats-info {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #3498db;
+        }
+
+        .stats-info h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .stats-info p {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .krona-container {
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+
+        .krona-container iframe {
+            background-color: white;
+        }
+
+        code {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                order: 2;
+            }
+            
+            .main-content {
+                order: 1;
+            }
+            
+            .ai-modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+            
+            .ai-explanation-btn {
+                font-size: 11px;
+                padding: 6px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Sidebar -->
+        <div class="sidebar">
+            <h1>Microbiome Analysis</h1>
+            
+            <!-- First Dropdown: Analysis Type -->
+            <div class="dropdown-group">
+                <label for="analysisType">Analysis Type:</label>
+                <select id="analysisType" onchange="updateSecondDropdown()">
+                    <option value="">Select Analysis Type</option>
+                    <option value="alpha">Alpha Diversity</option>
+                    <option value="beta">Beta Diversity</option>
+                    <option value="stacked">Stacked Bar Plots</option>
+                    <option value="krona">Krona Plots</option>
+                    <option value="specific_taxon">Visualize Specific Taxon</option>
+                </select>
+            </div>
+
+            <!-- Second Dropdown: Specific Options -->
+            <div class="dropdown-group">
+                <label for="specificOption">Select Option:</label>
+                <select id="specificOption" onchange="updateTaxaDropdown()">
+                    <option value="">Select an option first</option>
+                </select>
+            </div>
+
+            <!-- Third Dropdown: Specific Taxa (for specific taxon) -->
+            <div class="dropdown-group" id="specificTaxaGroup" style="display: none;">
+                <label for="specificTaxa">Select Taxon:</label>
+                <select id="specificTaxa" onchange="displayResults()">
+                    <option value="">Select a taxon first</option>
+                </select>
+            </div>
+
+            <!-- Color Picker Group (for specific taxon) -->
+            <div class="dropdown-group" id="colorPickerGroup" style="display: none;">
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <div>
+                        <label for="controlColor" style="font-size: 12px; margin-bottom: 5px;">Control Color:</label>
+                        <input type="color" id="controlColor" value="#4BC0C0" style="width: 50px; height: 30px; border: none; border-radius: 5px; cursor: pointer;">
+                    </div>
+                    <div>
+                        <label for="ucColor" style="font-size: 12px; margin-bottom: 5px;">UC Color:</label>
+                        <input type="color" id="ucColor" value="#FF6384" style="width: 50px; height: 30px; border: none; border-radius: 5px; cursor: pointer;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <div class="content-header">
+                <h2>Microbiome Analysis Results - AI Enhanced</h2>
+                <p>Select an analysis type and specific option from the sidebar to view results. Click the 🤖 AI button on any plot for intelligent explanations!</p>
+            </div>
+
+            <div class="results-area empty" id="resultsArea">
+                <p>Please select an analysis type and option to view results</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Explanation Modal -->
+    <div id="aiModal" class="ai-modal">
+        <div class="ai-modal-content">
+            <div class="ai-modal-header">
+                <h3>🤖 AI Explanation</h3>
+                <button class="ai-modal-close" onclick="closeAIModal()">&times;</button>
+            </div>
+            <div class="ai-modal-body" id="aiModalBody">
+                <div class="ai-loading">
+                    <div class="spinner"></div>
+                    <p>AI is analyzing your microbiome plot...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data structure for the dropdowns
+        const analysisOptions = {
+            alpha: {
+                name: "Alpha Diversity",
+                options: [
+                    { value: "kingdom_shannon", label: "Kingdom - Shannon", file: "alpha_diversity_kingdom_Shannon.png" },
+                    { value: "phylum_shannon", label: "Phylum - Shannon", file: "alpha_diversity_phylum_Shannon.png" },
+                    { value: "class_shannon", label: "Class - Shannon", file: "alpha_diversity_class_Shannon.png" },
+                    { value: "order_shannon", label: "Order - Shannon", file: "alpha_diversity_order_Shannon.png" },
+                    { value: "family_shannon", label: "Family - Shannon", file: "alpha_diversity_family_Shannon.png" },
+                    { value: "genus_shannon", label: "Genus - Shannon", file: "alpha_diversity_genus_Shannon.png" },
+                    { value: "species_shannon", label: "Species - Shannon", file: "alpha_diversity_species_Shannon.png" }
+                ]
+            },
+            beta: {
+                name: "Beta Diversity",
+                options: [
+                    { value: "kingdom_bray", label: "Kingdom - Bray-Curtis", file: "pcoa_kingdom_bray_with_stats.png" },
+                    { value: "phylum_bray", label: "Phylum - Bray-Curtis", file: "pcoa_phylum_bray_with_stats.png" },
+                    { value: "class_bray", label: "Class - Bray-Curtis", file: "pcoa_class_bray_with_stats.png" },
+                    { value: "order_bray", label: "Order - Bray-Curtis", file: "pcoa_order_bray_with_stats.png" },
+                    { value: "family_bray", label: "Family - Bray-Curtis", file: "pcoa_family_bray_with_stats.png" },
+                    { value: "genus_bray", label: "Genus - Bray-Curtis", file: "pcoa_genus_bray_with_stats.png" },
+                    { value: "species_bray", label: "Species - Bray-Curtis", file: "pcoa_species_bray_with_stats.png" }
+                ]
+            },
+            stacked: {
+                name: "Stacked Bar Plots",
+                options: [
+                    { value: "phylum_stacked", label: "Phylum - Top 20", file: "stacked_barplot_phylum_top20.png" },
+                    { value: "class_stacked", label: "Class - Top 20", file: "stacked_barplot_class_top20.png" },
+                    { value: "order_stacked", label: "Order - Top 20", file: "stacked_barplot_order_top20.png" },
+                    { value: "family_stacked", label: "Family - Top 20", file: "stacked_barplot_family_top20.png" },
+                    { value: "genus_stacked", label: "Genus - Top 20", file: "stacked_barplot_genus_top20.png" },
+                    { value: "species_stacked", label: "Species - Top 20", file: "stacked_barplot_species_top20.png" }
+                ]
+            },
+            krona: {
+                name: "Krona Plots",
+                options: [
+                    { value: "all_samples", label: "All Samples Combined", file: "all_krona_plots.html", type: "html" }
+                ]
+            }
+        };
+
+        // AI Explanations cache
+        let aiExplanationsCache = {};
+
+        // Load AI explanations on page load
+        window.addEventListener('load', function() {
+            loadAIExplanations();
+        });
+
+        async function loadAIExplanations() {
+            try {
+                const response = await fetch('plot_explanations.json');
+                if (response.ok) {
+                    aiExplanationsCache = await response.json();
+                    console.log('AI explanations loaded:', Object.keys(aiExplanationsCache).length);
+                }
+            } catch (error) {
+                console.log('AI explanations not available:', error.message);
+            }
+        }
+
+        function updateSecondDropdown() {
+            const analysisType = document.getElementById('analysisType').value;
+            const specificOption = document.getElementById('specificOption');
+            const specificTaxaGroup = document.getElementById('specificTaxaGroup');
+            const colorPickerGroup = document.getElementById('colorPickerGroup');
+            
+            // Clear all dropdowns
+            specificOption.innerHTML = '<option value="">Select an option first</option>';
+            specificTaxaGroup.style.display = 'none';
+            colorPickerGroup.style.display = 'none';
+            
+            if (analysisType === 'specific_taxon') {
+                // Add taxonomic levels as options
+                const taxonomicLevels = [
+                    { value: "2", label: "Phylum" },
+                    { value: "3", label: "Class" },
+                    { value: "4", label: "Order" },
+                    { value: "5", label: "Family" },
+                    { value: "6", label: "Genus" },
+                    { value: "7", label: "Species" }
+                ];
+                
+                taxonomicLevels.forEach(level => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = level.value;
+                    optionElement.textContent = level.label;
+                    specificOption.appendChild(optionElement);
+                });
+            } else if (analysisType && analysisOptions[analysisType]) {
+                // Add options for the selected analysis type
+                analysisOptions[analysisType].options.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option.value;
+                    optionElement.textContent = option.label;
+                    specificOption.appendChild(optionElement);
+                });
+            }
+        }
+
+        function updateTaxaDropdown() {
+            const analysisType = document.getElementById('analysisType').value;
+            const specificOption = document.getElementById('specificOption').value;
+            const specificTaxaGroup = document.getElementById('specificTaxaGroup');
+            const colorPickerGroup = document.getElementById('colorPickerGroup');
+            
+            console.log('updateTaxaDropdown called:', { analysisType, specificOption });
+            
+            if (analysisType === 'specific_taxon' && specificOption) {
+                // Fetch taxa for the selected taxonomic level
+                console.log('Fetching taxa for level:', specificOption);
+                fetchTaxaForLevel(specificOption);
+                specificTaxaGroup.style.display = 'block';
+                colorPickerGroup.style.display = 'block';
+                // Re-setup color picker listeners when showing the group
+                setupColorPickerListeners();
+            } else if (analysisType === 'specific_taxon') {
+                // Hide taxa dropdown if no level selected
+                console.log('Hiding taxa dropdown - no level selected');
+                specificTaxaGroup.style.display = 'none';
+                colorPickerGroup.style.display = 'none';
+            } else if (specificOption) {
+                // For other analysis types, display results
+                console.log('Displaying results for other analysis type');
+                displayResults();
+            }
+        }
+
+        async function fetchTaxaForLevel(level) {
+            const specificTaxa = document.getElementById('specificTaxa');
+            specificTaxa.innerHTML = '<option value="">Loading taxa...</option>';
+            
+            try {
+                // Use the full server URL since this might be opened as a local file
+                const serverUrl = window.location.protocol === 'file:' ? 'http://localhost:8001' : '';
+                const fullUrl = `${serverUrl}/cgi-bin/extract_taxa.py?command=get_taxa&level=${level}`;
+                
+                console.log('Fetching taxa from URL:', fullUrl);
+                console.log('Current location protocol:', window.location.protocol);
+                
+                const response = await fetch(fullUrl);
+                
+                console.log('Response received:', response.status, response.statusText);
+                
+                if (response.ok) {
+                    const taxa = await response.json();
+                    console.log('Taxa loaded:', taxa.length, 'taxa');
+                    specificTaxa.innerHTML = '<option value="">Select a taxon</option>';
+                    taxa.forEach(taxon => {
+                        const option = document.createElement('option');
+                        option.value = taxon;
+                        option.textContent = taxon;
+                        specificTaxa.appendChild(option);
+                    });
+                } else {
+                    console.error('Server response not OK:', response.status, response.statusText);
+                    specificTaxa.innerHTML = '<option value="">Error loading taxa</option>';
+                }
+            } catch (error) {
+                console.error('Error fetching taxa:', error);
+                specificTaxa.innerHTML = '<option value="">Error loading taxa</option>';
+            }
+        }
+
+        async function displaySpecificTaxonResults(level, taxon, resultsArea) {
+            resultsArea.className = 'results-area';
+            resultsArea.innerHTML = '<p>Loading data for ' + taxon + '...</p>';
+            
+            try {
+                // Use the full server URL since this might be opened as a local file
+                const serverUrl = window.location.protocol === 'file:' ? 'http://localhost:8001' : '';
+                const url = `${serverUrl}/cgi-bin/extract_taxa.py?command=get_data&level=${level}&taxon=${encodeURIComponent(taxon)}`;
+                
+                console.log('Fetching data from URL:', url);
+                
+                const response = await fetch(url);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Data received from API:', data);
+                    console.log('Data type:', typeof data);
+                    console.log('Data keys:', Object.keys(data));
+                    
+                    displayTaxonBarPlot(data, taxon, resultsArea);
+                } else {
+                    console.error('Server response not OK:', response.status, response.statusText);
+                    resultsArea.innerHTML = '<p>Error loading data for ' + taxon + '</p>';
+                }
+            } catch (error) {
+                console.error('Error fetching taxon data:', error);
+                resultsArea.innerHTML = '<p>Error loading data for ' + taxon + '</p>';
+            }
+        }
+
+        function displayTaxonBarPlot(data, taxon, resultsArea) {
+            resultsArea.className = 'results-area';
+            
+            console.log('Creating chart for taxon:', taxon);
+            console.log('Raw data received:', data);
+            
+            // Extract the actual sample data from the structured response
+            let sampleNames, values;
+            
+            if (data.sample_names && data.rpm_values) {
+                // Use the actual sample names and RPM values
+                sampleNames = data.sample_names;
+                values = data.rpm_values;
+                console.log('Using sample_names and rpm_values:', sampleNames, values);
+                
+                // Reorder samples: Control first, then UC samples
+                const controlIndex = sampleNames.findIndex(name => name.includes('Ctrl'));
+                if (controlIndex !== -1) {
+                    // Move control sample to the beginning
+                    const controlName = sampleNames[controlIndex];
+                    const controlValue = values[controlIndex];
+                    
+                    // Remove control from original arrays
+                    sampleNames.splice(controlIndex, 1);
+                    values.splice(controlIndex, 1);
+                    
+                    // Add control to the beginning
+                    sampleNames.unshift(controlName);
+                    values.unshift(controlValue);
+                }
+                
+                console.log('Reordered sample names:', sampleNames);
+                console.log('Reordered values:', values);
+            } else {
+                // Fallback to the old method
+                sampleNames = Object.keys(data);
+                values = Object.values(data);
+                console.log('Fallback - using keys and values:', sampleNames, values);
+            }
+            
+            // Clear the results area
+            resultsArea.innerHTML = '';
+            
+            // Create the main container
+            const mainContainer = document.createElement('div');
+            mainContainer.className = 'content-header';
+            mainContainer.innerHTML = `<h3>${taxon} Abundance Across Samples</h3>`;
+            resultsArea.appendChild(mainContainer);
+            
+            // Create chart container
+            const chartContainer = document.createElement('div');
+            chartContainer.className = 'image-container';
+            chartContainer.style.position = 'relative';
+            
+            // Create canvas element
+            const canvas = document.createElement('canvas');
+            canvas.id = 'taxonChart';
+            canvas.style.maxHeight = '400px';
+            canvas.style.width = '100%';
+            
+            // Create AI button
+            const aiButton = document.createElement('button');
+            aiButton.className = 'ai-explanation-btn';
+            aiButton.innerHTML = '🤖 AI Explain';
+            aiButton.onclick = function() { 
+                // Pass the actual plot data for personalized AI analysis
+                const plotData = {
+                    taxon_name: taxon,
+                    sample_data: Object.fromEntries(sampleNames.map((name, index) => [name, values[index]])),
+                    sample_names: sampleNames,
+                    rpm_values: values
+                };
+                showAIExplanation(taxon, 'taxon_plot', plotData); 
+            };
+            
+            // Add canvas and button to container
+            chartContainer.appendChild(canvas);
+            chartContainer.appendChild(aiButton);
+            
+            // Add chart container to results
+            resultsArea.appendChild(chartContainer);
+            
+            // Wait a moment for DOM to be ready, then create the chart
+            setTimeout(() => {
+                try {
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        console.log('Creating Chart.js chart with labels:', sampleNames);
+                        console.log('And values:', values);
+                        
+                        new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: sampleNames,
+                                datasets: [{
+                                    label: `${taxon} Abundance (RPM)`,
+                                    data: values,
+                                    backgroundColor: sampleNames.map(name => 
+                                        name.includes('UC') ? '#FF6384' : '#4BC0C0'
+                                    ),
+                                    borderColor: sampleNames.map(name => 
+                                        name.includes('UC') ? '#FF6384' : '#4BC0C0'
+                                    ),
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        title: {
+                                            display: true,
+                                            text: 'Abundance (RPM)'
+                                        }
+                                    },
+                                    x: {
+                                        title: {
+                                            display: true,
+                                            text: 'Samples'
+                                        }
+                                    }
+                                },
+                                plugins: {
+                                    legend: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        });
+                        console.log('Chart created successfully!');
+                    } else {
+                        console.error('Could not get canvas context');
+                    }
+                } catch (error) {
+                    console.error('Error creating chart:', error);
+                    // Fallback: show data as text
+                    chartContainer.innerHTML = `
+                        <div class="stats-info">
+                            <h4>Data for ${taxon}</h4>
+                            <p>Sample data received but chart creation failed. Here are the values:</p>
+                            <ul>
+                                ${sampleNames.map((name, index) => `<li>${name}: ${values[index]}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+            }, 100);
+            
+            // Add explanation section
+            const explanationSection = document.createElement('div');
+            explanationSection.className = 'stats-info';
+            explanationSection.innerHTML = `
+                <h4>What This Plot Shows</h4>
+                <p><strong>Simple Explanation:</strong> This bar chart shows how much of the specific microbe "${taxon}" is present in each sample. Each bar represents a different person, and the height shows the abundance of this microbe in RPM (Reads Per Million).</p>
+                <p><strong>What to Look For:</strong> Compare the heights of the bars between Control and UC groups. If the bars are very different, it suggests that this microbe might be important for health or disease.</p>
+                <p><strong>Why It Matters:</strong> Understanding which microbes are more or less abundant in healthy vs. diseased individuals helps identify potential treatments or understand how the disease affects the gut.</p>
+                <p><strong>Sample Data:</strong> ${sampleNames.join(', ')}</p>
+                <p><strong>Data Summary:</strong> Control: ${data.control ? data.control.toFixed(4) : 'N/A'}, UC Mean: ${data.uc_mean ? data.uc_mean.toFixed(4) : 'N/A'}</p>
+            `;
+            resultsArea.appendChild(explanationSection);
+        }
+
+        function setupColorPickerListeners() {
+            const controlColor = document.getElementById('controlColor');
+            const ucColor = document.getElementById('ucColor');
+            
+            if (controlColor && ucColor) {
+                controlColor.addEventListener('change', updateChartColors);
+                ucColor.addEventListener('change', updateChartColors);
+            }
+        }
+
+        function updateChartColors() {
+            const controlColor = document.getElementById('controlColor').value;
+            const ucColor = document.getElementById('ucColor').value;
+            
+            const chart = Chart.getChart('taxonChart');
+            if (!chart) return;
+            
+            const sampleNames = chart.data.labels;
+            const newColors = sampleNames.map(name => 
+                name.includes('UC') ? ucColor : controlColor
+            );
+            
+            chart.data.datasets[0].backgroundColor = newColors;
+            chart.data.datasets[0].borderColor = newColors;
+            
+            chart.update('none'); // Update without animation for better performance
+            console.log('Chart colors updated successfully');
+        }
+
+        function displayResults() {
+            const analysisType = document.getElementById('analysisType').value;
+            const specificOption = document.getElementById('specificOption').value;
+            const specificTaxa = document.getElementById('specificTaxa').value;
+            const resultsArea = document.getElementById('resultsArea');
+            
+            if (analysisType === 'specific_taxon') {
+                if (!specificOption || !specificTaxa) {
+                    resultsArea.className = 'results-area empty';
+                    resultsArea.innerHTML = '<p>Please select a taxonomic level and taxon to view results</p>';
+                    return;
+                }
+                // Handle specific taxon visualization
+                displaySpecificTaxonResults(specificOption, specificTaxa, resultsArea);
+                return;
+            }
+            
+            if (!analysisType || !specificOption) {
+                resultsArea.className = 'results-area empty';
+                resultsArea.innerHTML = '<p>Please select an analysis type and option to view results</p>';
+                return;
+            }
+            
+            // Find the selected option
+            const selectedOption = analysisOptions[analysisType].options.find(opt => opt.value === specificOption);
+            
+            if (selectedOption) {
+                resultsArea.className = 'results-area';
+                
+                let content = '';
+                
+                if (analysisType === 'alpha') {
+                    content = `
+                        <div class="content-header">
+                            <h3>${selectedOption.label}</h3>
+                        </div>
+                        <div class="image-container">
+                            <div style="position: relative;">
+                                <img src="${selectedOption.file}" alt="${selectedOption.label}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                <button class="ai-explanation-btn" onclick="showAIExplanation('${selectedOption.file}', 'alpha_diversity')">
+                                    🤖 AI Explain
+                                </button>
+                            </div>
+                            <p style="display:none; color: #e74c3c;">Image not found: ${selectedOption.file}</p>
+                        </div>
+                        <div class="stats-info">
+                            <h4>What This Plot Shows</h4>
+                            <p><strong>Simple Explanation:</strong> This plot is like taking a "census" of the microbes living inside each person's gut. The Shannon index tells us how diverse and balanced the microbial community is - think of it like measuring how many different types of animals live in a forest and how evenly they're distributed.</p>
+                            <p><strong>What to Look For:</strong> Higher bars mean more diverse microbial communities. If the bars are very different between Control and UC groups, it suggests that the disease affects the variety of microbes in the gut.</p>
+                            <p><strong>Why It Matters:</strong> A healthy gut usually has many different types of microbes working together. If someone has fewer types (lower diversity), it might indicate an imbalance that could be related to their health condition.</p>
+                        </div>
+                    `;
+                } else if (analysisType === 'beta') {
+                    content = `
+                        <div class="content-header">
+                            <h3>${selectedOption.label}</h3>
+                        </div>
+                        <div class="image-container">
+                            <div style="position: relative;">
+                                <img src="${selectedOption.file}" alt="${selectedOption.label}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                <button class="ai-explanation-btn" onclick="showAIExplanation('${selectedOption.file}', 'pcoa')">
+                                    🤖 AI Explain
+                                </button>
+                            </div>
+                            <p style="display:none; color: #e74c3c;">Image not found: ${selectedOption.file}</p>
+                        </div>
+                        <div class="stats-info">
+                            <h4>What This Plot Shows</h4>
+                            <p><strong>Simple Explanation:</strong> This plot is like a "map" that shows how similar or different each person's gut microbiome is to everyone else's. Think of it like plotting cities on a map - cities that are close together are more similar, cities far apart are more different.</p>
+                            <p><strong>What to Look For:</strong> Points that are close together represent people with similar gut microbes. If all the Control samples cluster together and all the UC samples cluster together, it means the disease creates a distinct pattern in the gut microbiome.</p>
+                            <p><strong>Why It Matters:</strong> This helps us see if people with the same health condition have similar gut microbiomes, which could help develop treatments or understand how the disease affects the gut.</p>
+                        </div>
+                    `;
+                } else if (analysisType === 'stacked') {
+                    content = `
+                        <div class="content-header">
+                            <h3>${selectedOption.label}</h3>
+                        </div>
+                        <div class="image-container">
+                            <div style="position: relative;">
+                                <img src="${selectedOption.file}" alt="${selectedOption.label}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                <button class="ai-explanation-btn" onclick="showAIExplanation('${selectedOption.file}', 'stacked_barplot')">
+                                    🤖 AI Explain
+                                </button>
+                            </div>
+                            <p style="display:none; color: #e74c3c;">Image not found: ${selectedOption.file}</p>
+                        </div>
+                        <div class="stats-info">
+                            <h4>What This Plot Shows</h4>
+                            <p><strong>Simple Explanation:</strong> This plot is like a "recipe breakdown" showing what makes up each person's gut microbiome. Each colored section represents a different type of microbe, and the height shows how much of that microbe is present.</p>
+                            <p><strong>What to Look For:</strong> Look for patterns in the colored sections. If certain microbes (colors) appear more in one group than another, it suggests those microbes might be important for health or disease.</p>
+                            <p><strong>Why It Matters:</strong> Understanding which microbes are more or less abundant in healthy vs. diseased individuals helps identify potential "good" microbes that could be used as treatments or "bad" microbes that could be targets for therapy.</p>
+                        </div>
+                    `;
+                } else if (analysisType === 'krona') {
+                    let sampleDescription = "";
+                    if (selectedOption.value === "all_samples") {
+                        sampleDescription = "This interactive Krona plot shows the combined taxonomic composition across all samples. It provides an overview of the overall microbial diversity in your dataset.";
+                    } else {
+                        const sampleName = selectedOption.label.split(' ')[0];
+                        const sampleGroup = selectedOption.label.includes('UC') ? 'Ulcerative Colitis' : 'Control';
+                        sampleDescription = `This interactive Krona plot shows the taxonomic composition for sample ${sampleName} (${sampleGroup}). You can explore the microbial diversity specific to this individual sample.`;
+                    }
+                    
+                    content = `
+                        <div class="content-header">
+                            <h3>${selectedOption.label}</h3>
+                        </div>
+                        <div class="krona-container" style="width: 100%; height: 600px; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+                            <iframe src="${selectedOption.file}" style="width: 100%; height: 100%; border: none;" title="${selectedOption.label}"></iframe>
+                        </div>
+                        <div class="stats-info">
+                            <h4>What This Plot Shows</h4>
+                            <p><strong>Simple Explanation:</strong> This is like an interactive "family tree" of all the microbes found in the samples. It shows the different types of bacteria, viruses, and other microbes organized by their biological relationships, just like how animals are grouped into families, orders, and species.</p>
+                            <p><strong>What to Look For:</strong> The larger the section, the more abundant that type of microbe is. You can click on any section to zoom in and see more details about that group of microbes.</p>
+                            <p><strong>Why It Matters:</strong> This gives us a complete picture of what's living in the gut and helps identify which microbes might be important for health or disease. It's like having a detailed inventory of all the living things in an ecosystem.</p>
+                            <p><strong>How to Use:</strong> Use the mouse wheel to zoom in/out, click on different sections to explore specific taxonomic groups, and navigate through the microbial diversity hierarchy. The plot is fully interactive and allows you to drill down into specific taxa.</p>
+                        </div>
+                        <div class="stats-info" style="background-color: #e8f5e8; border-left-color: #4caf50;">
+                            <h4>Sample Labels Updated</h4>
+                            <p>The Krona plot now displays sample names (PedUC47, PedUC58, PedCtrl59, PedUC60) instead of SRR accession numbers, making it easier to identify each sample's contribution to the overall microbial composition.</p>
+                        </div>
+                        <div class="stats-info" style="background-color: #fff3cd; border-left-color: #ffc107;">
+                            <h4>Keeping Labels Updated</h4>
+                            <p>To ensure the Krona plot always shows the correct sample names, run this command in your terminal whenever you update your data:</p>
+                            <code style="background: #f8f9fa; padding: 8px; border-radius: 4px; display: block; margin: 10px 0;">python update_krona_labels.py</code>
+                            <p>This script automatically reads <code>metadata.tsv</code> and updates the Krona plot labels to match your current sample names.</p>
+                        </div>
+                    `;
+                }
+                
+                resultsArea.innerHTML = content;
+            }
+        }
+
+        // AI Explanation Functions
+        function showAIExplanation(filename, plotType, plotData = null) {
+            console.log('showAIExplanation called with:', filename, plotType, plotData);
+            
+            const modal = document.getElementById('aiModal');
+            const modalBody = document.getElementById('aiModalBody');
+            
+            if (!modal || !modalBody) {
+                console.error('Modal elements not found!');
+                return;
+            }
+            
+            // Show modal with loading state
+            modal.style.display = 'block';
+            modalBody.innerHTML = `
+                <div class="ai-loading">
+                    <div class="spinner"></div>
+                    <p>🤖 AI is analyzing your specific data...</p>
+                </div>
+            `;
+            
+            // Get AI explanation with data
+            getAIExplanation(filename, plotType, plotData);
+            
+            // Safety timeout - if nothing happens in 10 seconds, show fallback
+            setTimeout(() => {
+                if (modalBody.innerHTML.includes('AI is analyzing')) {
+                    console.log('Timeout reached, showing fallback');
+                    const fallbackExplanation = generateFallbackExplanation(plotType, filename, plotData);
+                    displayAIExplanation(fallbackExplanation, modalBody, filename);
+                }
+            }, 10000);
+        }
+
+        function closeAIModal() {
+            const modal = document.getElementById('aiModal');
+            modal.style.display = 'none';
+        }
+
+        async function getAIExplanation(filename, plotType, plotData = null) {
+            const modalBody = document.getElementById('aiModalBody');
+            
+            try {
+                console.log('Looking for AI explanation for:', filename, 'plotType:', plotType, 'plotData:', plotData);
+                
+                // For taxon plots with data, use real-time AI analysis
+                if (plotType === 'taxon_plot' && plotData) {
+                    console.log('Using real-time AI analysis for taxon plot');
+                    await callRealTimeAI(plotType, plotData, modalBody);
+                    return;
+                }
+                
+                // For other plot types, try cache first
+                console.log('Available AI explanations:', Object.keys(aiExplanationsCache));
+                
+                // First, try to find an exact match
+                if (aiExplanationsCache[filename]) {
+                    console.log('Found exact match for:', filename);
+                    const explanation = aiExplanationsCache[filename];
+                    displayAIExplanation(explanation, modalBody, filename);
+                    return;
+                }
+                
+                // If no exact match, try to find a similar plot type
+                let foundExplanation = null;
+                for (const key in aiExplanationsCache) {
+                    const explanation = aiExplanationsCache[key];
+                    if (explanation.plot_type === plotType) {
+                        console.log('Found plot type match:', key);
+                        foundExplanation = explanation;
+                        break;
+                    }
+                }
+                
+                if (foundExplanation) {
+                    console.log('Using plot type match:', foundExplanation);
+                    displayAIExplanation(foundExplanation, modalBody, filename);
+                    return;
+                }
+                
+                // If still no match, show fallback
+                console.log('No AI explanation found, using fallback');
+                const fallbackExplanation = generateFallbackExplanation(plotType, filename, plotData);
+                console.log('Fallback explanation:', fallbackExplanation);
+                displayAIExplanation(fallbackExplanation, modalBody, filename);
+                
+            } catch (error) {
+                console.error('Error getting AI explanation:', error);
+                const fallbackExplanation = generateFallbackExplanation(plotType, filename, plotData);
+                displayAIExplanation(fallbackExplanation, modalBody, filename);
+            }
+                }
+        
+        async function callRealTimeAI(plotType, plotData, modalBody) {
+            console.log('Calling real-time AI with data:', plotData);
+            
+            try {
+                // Prepare form data for CGI
+                const formData = new FormData();
+                formData.append('plot_type', plotType);
+                formData.append('taxon_name', plotData.taxon_name || 'Unknown');
+                formData.append('sample_data', JSON.stringify(plotData.sample_data || {}));
+                formData.append('sample_names', JSON.stringify(plotData.sample_names || []));
+                formData.append('rpm_values', JSON.stringify(plotData.rpm_values || []));
+                
+                console.log('Sending data to AI:', {
+                    plot_type: plotType,
+                    taxon_name: plotData.taxon_name,
+                    sample_data: plotData.sample_data,
+                    sample_names: plotData.sample_names,
+                    rpm_values: plotData.rpm_values
+                });
+                
+                // Call the CGI endpoint
+                const response = await fetch('http://localhost:8001/cgi-bin/ai_analyze.py', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Real-time AI response:', data);
+                
+                if (data.success) {
+                    // Create a structured explanation object for display
+                    const aiExplanation = {
+                        plot_type: plotType,
+                        taxonomic_level: 'taxon_plot',
+                        explanation: data.analysis,
+                        filename: plotData.taxon_name
+                    };
+                    displayAIExplanation(aiExplanation, modalBody, plotData.taxon_name);
+                } else {
+                    console.error('AI analysis failed:', data.error);
+                    const fallback = generateFallbackExplanation(plotType, plotData.taxon_name, plotData);
+                    displayAIExplanation(fallback, modalBody, plotData.taxon_name);
+                }
+                
+            } catch (error) {
+                console.error('Error calling real-time AI:', error);
+                const fallback = generateFallbackExplanation(plotType, plotData.taxon_name, plotData);
+                displayAIExplanation(fallback, modalBody, plotData.taxon_name);
+            }
+        }
+        
+        function displayAIExplanation(explanation, modalBody, filename) {
+            console.log('displayAIExplanation called with:', { explanation, filename });
+            
+            const plotType = explanation.plot_type || 'unknown';
+            const taxonomicLevel = explanation.taxonomic_level || '';
+            const aiText = explanation.explanation || 'AI explanation not available.';
+            
+            console.log('Processed explanation data:', { plotType, taxonomicLevel, aiText });
+            
+            let title = filename;
+            if (filename.includes('_')) {
+                title = filename.replace(/_/g, ' ').replace('.png', '').replace(/\b\w/g, l => l.toUpperCase());
+            }
+            if (taxonomicLevel) {
+                title = `${taxonomicLevel.charAt(0).toUpperCase() + taxonomicLevel.slice(1)} Level - ${title}`;
+            }
+            
+            console.log('Final title:', title);
+            
+            modalBody.innerHTML = `
+                <div class="ai-explanation-content">
+                    <h4>🤖 AI Analysis: ${plotType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</h4>
+                    <p><strong>Plot:</strong> ${title}</p>
+                    <p>${aiText}</p>
+                </div>
+                <div class="stats-info">
+                    <h4>💡 How to Use This Information</h4>
+                    <p>• <strong>For Patients:</strong> This explanation helps you understand what your microbiome results mean in simple terms</p>
+                    <p>• <strong>For Healthcare Providers:</strong> Use this to explain results to patients and guide treatment decisions</p>
+                    <p>• <strong>For Research:</strong> These insights can help identify patterns and guide further investigation</p>
+                </div>
+            `;
+        }
+
+        function generateFallbackExplanation(plotType, filename, plotData = null) {
+            // If we have plot data, generate a personalized fallback
+            if (plotData && plotType === 'taxon_plot') {
+                return generatePersonalizedTaxonFallback(plotData);
+            }
+            
+            const fallbackExplanations = {
+                "stacked_barplot": "This chart shows the different types of bacteria found in your gut. The bigger each bar is, the more of that bacteria type you have. This helps us understand what's living in your digestive system.",
+                "alpha_diversity": "This chart shows how diverse your gut bacteria community is. Think of it like having a variety of different plants in a garden - more variety is generally better for your health.",
+                "pcoa": "This chart shows how similar or different your microbiome is compared to other people. It helps us see if your gut bacteria pattern is typical or unique.",
+                "krona": "This interactive chart shows the complete family tree of bacteria found in your gut. It's like a map of all the tiny organisms living in your digestive system.",
+                "taxon_plot": "This bar chart shows the abundance of a specific microbe across different samples. Each bar represents a different person, and the height shows how much of that microbe is present in their gut. This helps us understand if certain microbes are more common in healthy vs. diseased individuals."
+            };
+            
+            let explanation = fallbackExplanations[plotType] || "This chart shows important information about your gut microbiome.";
+            
+            // Try to extract taxonomic level from filename
+            const taxonomicLevels = ["phylum", "class", "order", "family", "genus", "species"];
+            for (const level of taxonomicLevels) {
+                if (filename.toLowerCase().includes(level)) {
+                    explanation += ` We're looking at the ${level} level, which represents ${getTaxonomicDescription(level)}.`;
+                    break;
+                }
+            }
+            
+            return {
+                plot_type: plotType,
+                taxonomic_level: null,
+                explanation: explanation
+            };
+        }
+        
+        function generatePersonalizedTaxonFallback(plotData) {
+            const { taxon_name, sample_data, sample_names, rpm_values } = plotData;
+            
+            // Find control vs UC samples
+            const controlSamples = sample_names.filter(name => name.toLowerCase().includes('ctrl') || name.toLowerCase().includes('control'));
+            const ucSamples = sample_names.filter(name => !controlSamples.includes(name));
+            
+            // Calculate averages
+            const controlValues = controlSamples.map(name => sample_data[name] || 0);
+            const ucValues = ucSamples.map(name => sample_data[name] || 0);
+            
+            const controlAvg = controlValues.length > 0 ? controlValues.reduce((a, b) => a + b, 0) / controlValues.length : 0;
+            const ucAvg = ucValues.length > 0 ? ucValues.reduce((a, b) => a + b, 0) / ucValues.length : 0;
+            
+            // Find max and min values
+            const maxValue = Math.max(...rpm_values);
+            const minValue = Math.min(...rpm_values);
+            
+            let explanation = `This plot shows ${taxon_name} abundance across your samples. `;
+            
+            if (controlSamples.length > 0 && ucSamples.length > 0) {
+                const difference = ucAvg - controlAvg;
+                const ratio = controlAvg > 0 ? ucAvg / controlAvg : 0;
+                
+                if (Math.abs(difference) > 0.01) { // Significant difference
+                    if (difference > 0) {
+                        explanation += `Control samples show an average of ${controlAvg.toFixed(3)} RPM, while UC samples show ${ucAvg.toFixed(3)} RPM (${ratio.toFixed(1)}x higher). `;
+                        explanation += `This increased abundance of ${taxon_name} in UC samples suggests it may be associated with your condition. `;
+                    } else {
+                        explanation += `Control samples show an average of ${controlAvg.toFixed(3)} RPM, while UC samples show ${ucAvg.toFixed(3)} RPM (${(1/ratio).toFixed(1)}x lower). `;
+                        explanation += `This decreased abundance of ${taxon_name} in UC samples suggests it may be protective or reduced in your condition. `;
+                    }
+                } else {
+                    explanation += `Control and UC samples show similar levels (${controlAvg.toFixed(3)} vs ${ucAvg.toFixed(3)} RPM), suggesting ${taxon_name} may not be significantly affected. `;
+                }
+            }
+            
+            explanation += `The abundance ranges from ${minValue.toFixed(3)} to ${maxValue.toFixed(3)} RPM across all samples. `;
+            explanation += `Discuss these specific results with your healthcare provider for personalized insights.`;
+            
+            return {
+                plot_type: 'taxon_plot',
+                taxonomic_level: 'taxon_plot',
+                explanation: explanation
+            };
+        }
+
+        function getTaxonomicDescription(level) {
+            const descriptions = {
+                "phylum": "major groups of bacteria (like animal families)",
+                "class": "subgroups within major bacterial families",
+                "order": "specific types within bacterial classes",
+                "family": "closely related bacterial groups",
+                "genus": "very similar bacterial types",
+                "species": "individual bacterial strains"
+            };
+            return descriptions[level] || "bacterial groups";
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('aiModal');
+            if (event.target === modal) {
+                closeAIModal();
+            }
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeAIModal();
+            }
+        });
+    </script>
+</body>
+</html>

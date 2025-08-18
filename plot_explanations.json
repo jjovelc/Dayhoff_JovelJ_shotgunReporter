@@ -1,0 +1,102 @@
+{
+  "stacked_barplot_order_top20.png": {
+    "plot_type": "stacked_barplot",
+    "taxonomic_level": "order",
+    "explanation": "This chart shows the different types of bacteria found in your gut. The bigger each bar is, the more of that bacteria type you have. This helps us understand what's living in your digestive system. We're looking at the order level, which represents specific types within bacterial classes."
+  },
+  "alpha_diversity_class_Shannon.png": {
+    "plot_type": "alpha_diversity",
+    "taxonomic_level": "class",
+    "explanation": "What you\u2019re looking at:  \nThis chart shows the \u201calpha diversity\u201d of the different bacterial classes living in your gut \u2013 it\u2019s like counting how many distinct types of friends are in your neighborhood and how evenly they\u2019re spread out.\n\nWhat it means for your health:  \nA higher, more balanced number of classes usually signals a healthier gut that can do more jobs (digest food, fight off bad germs, keep your immune system happy).\n\nWhy it\u2019s important:  \nKnowing where you stand lets you make smart choices\u2014like foods or probiotics\u2014to keep your gut community diverse and strong, which can boost overall wellbeing."
+  },
+  "alpha_diversity_kingdom_Shannon.png": {
+    "plot_type": "alpha_diversity",
+    "taxonomic_level": null,
+    "explanation": "This chart shows how many different kinds of gut microbes you have\u2014think of it like the variety on a menu.  \nThe higher the number, the more diverse your gut, which usually means it\u2019s better at digesting food, fighting germs, and keeping you feeling good.  \nA diverse gut is a good sign for overall health, so you can use this info to keep your microbiome balanced and thriving."
+  },
+  "alpha_diversity_genus_Shannon.png": {
+    "plot_type": "alpha_diversity",
+    "taxonomic_level": "genus",
+    "explanation": "This chart shows how many different kinds of gut bacteria you have. A higher number means a more varied, balanced gut that can help digestion and immunity. It\u2019s a good sign that your gut is healthy and ready to support you."
+  },
+  "stacked_barplot_family_top20.png": {
+    "plot_type": "stacked_barplot",
+    "taxonomic_level": "family",
+    "explanation": "This chart shows a big bar for each of your stool samples, split into colored slices that represent different families of gut bacteria\u2014like a rainbow of tiny food groups. The bigger a slice, the more that family is present, and seeing which slices are healthy (like good helpers) versus those that might cause trouble can tell you how balanced your gut is. Knowing this balance helps you spot if you need to eat more fiber or probiotics to keep your tummy happy and your body working well."
+  },
+  "pcoa_family_bray_with_stats.png": {
+    "plot_type": "pcoa",
+    "taxonomic_level": "family",
+    "explanation": "This chart shows how the groups of gut bacteria in your sample line up with other people\u2019s samples.  \nIf your dot sits near the \u201chealthy\u201d cluster, it means your gut bacteria are in a balanced state that can support digestion, mood, and immunity.  \nSeeing where you fall on the plot lets you spot shifts over time and see how diet, probiotics, or lifestyle changes move your gut toward a healthier mix."
+  },
+  "pcoa_kingdom_bray_with_stats.png": {
+    "plot_type": "pcoa",
+    "taxonomic_level": null,
+    "explanation": "This chart shows dots that each stand for one of your gut samples; dots that are close together mean those guts share similar bacteria, while dots that are far apart mean different bacterial communities. If your dots line up with the healthy cluster, it suggests your gut is in good shape; if they stand apart, it might mean your gut is missing helpful bacteria or has too many harmful ones. Knowing where you fall helps doctors pick the right diet, probiotics, or treatments to boost your gut and overall health."
+  },
+  "stacked_barplot_species_top20.png": {
+    "plot_type": "stacked_barplot",
+    "taxonomic_level": "species",
+    "explanation": "Each bar is your entire gut community, split into pieces that show how many of each bacterial strain you have. The bigger the piece, the more that strain is present, so you can see which ones dominate. This picture helps you understand if your gut is healthy and can point to simple ways to support it."
+  },
+  "pcoa_species_bray_with_stats.png": {
+    "plot_type": "pcoa",
+    "taxonomic_level": "species",
+    "explanation": "This chart shows how similar or different each of your gut samples are, like a map of how close friends sit in a classroom. If two samples are close together, they have very similar bacterial \u201cspecies\u201d in them, which often means a more stable and healthy gut. Seeing where your samples fall can help you spot changes that might affect your digestion or mood, so you can make healthier choices and keep your gut crew happy."
+  },
+  "pcoa_order_bray_with_stats.png": {
+    "plot_type": "pcoa",
+    "taxonomic_level": "order",
+    "explanation": "This chart shows each of your gut samples as a dot, and how close or far the dots are tells us how similar the bacterial \u201corders\u201d are in each person\u2019s gut. If your dot is near others that are known to be healthy, it means your gut microbes are in a good balance, which can help digestion and immunity. Seeing where you stand helps you understand your gut health and gives you a clear goal for improving it if needed."
+  },
+  "alpha_diversity_species_Shannon.png": {
+    "plot_type": "alpha_diversity",
+    "taxonomic_level": "species",
+    "explanation": "This chart shows how many different kinds of bacteria (species) live in your gut\u2014think of it like counting the different types of fruit in a basket. A higher number means a more varied and balanced gut community, which is usually linked to better digestion and a stronger immune system. Knowing your diversity score helps you see how healthy your gut is and can guide choices that keep it thriving."
+  },
+  "stacked_barplot_phylum_top20.png": {
+    "plot_type": "stacked_barplot",
+    "taxonomic_level": "phylum",
+    "explanation": "This chart shows how your gut is filled with different \u201cfamilies\u201d of bacteria, each color representing one family stacked on top of the others. A higher proportion of the healthy\u2011gut families (the light\u2011colored ones) means your digestive system is balanced and can help keep you feeling good. Seeing these colors side by side lets you track how changes in diet or medicine shift your gut\u2019s mix, so you can keep it in the best shape possible."
+  },
+  "alpha_diversity_order_Shannon.png": {
+    "plot_type": "alpha_diversity",
+    "taxonomic_level": "order",
+    "explanation": "This chart shows how many different types of gut bacteria (by order) you have, kind of like counting the variety of foods in a meal. A higher number means a more diverse, balanced gut, which usually supports better digestion, immunity, and overall health. Knowing your diversity level helps you see if your gut is thriving or if you might want to add more variety to your diet or lifestyle."
+  },
+  "stacked_barplot_class_top20.png": {
+    "plot_type": "stacked_barplot",
+    "taxonomic_level": "class",
+    "explanation": "This chart shows a \u201cstack\u201d of colored slices inside each bar, each slice representing a different class of gut bacteria that live in your digestive system. A healthy gut usually has a good mix of these slices \u2013 some help break down food, others keep your immune system calm, and a balanced mix means your gut is working smoothly. Looking at the chart lets you and your doctor spot if any one group is too big or too small, so you can adjust diet, probiotics, or lifestyle to keep your gut happy and healthy."
+  },
+  "alpha_diversity_family_Shannon.png": {
+    "plot_type": "alpha_diversity",
+    "taxonomic_level": "family",
+    "explanation": "This chart shows how many different families of gut bacteria you have, like counting how many kinds of fruit are in a basket. A higher number means a more varied gut, which can help keep digestion and immunity strong. Having a diverse gut is like eating a balanced plate \u2013 it\u2019s a good sign that your body is getting the variety it needs to stay healthy."
+  },
+  "alpha_diversity_phylum_Shannon.png": {
+    "plot_type": "alpha_diversity",
+    "taxonomic_level": "phylum",
+    "explanation": "The graph is a quick snapshot of how many different big groups of gut bacteria (like animal families) live in your gut, just like counting how many species of birds you see in a park. A higher count means a richer, more balanced gut community, which is usually linked to better digestion and a stronger immune system. Knowing this helps you see if your diet, habits, or treatments are keeping your gut healthy and diverse."
+  },
+  "pcoa_genus_bray_with_stats.png": {
+    "plot_type": "pcoa",
+    "taxonomic_level": "genus",
+    "explanation": "The plot is like a map of your gut bacteria, where each dot is a sample and dots that sit close together mean the bacteria are similar. If your dots line up with the healthy cluster, your gut is in good shape; if they spread out or sit with a \u201cdifferent\u201d group, it could signal changes that affect digestion or mood. Watching these patterns lets you and your doctor see how diet, meds, or lifestyle tweaks can help keep your gut happy and healthy."
+  },
+  "stacked_barplot_genus_top20.png": {
+    "plot_type": "stacked_barplot",
+    "taxonomic_level": "genus",
+    "explanation": "Each bar is one person, and the colored slices inside show the different kinds of gut bacteria that live there; the bigger the slice, the more of that type you have. If the bars are mostly filled with the colors linked to good digestion and mood, it means your gut is likely healthy; if you see lots of the colors tied to problems, it could hint at a need for a little change, like new foods or a probiotic. Knowing this picture helps you and your doctor pick simple tweaks that can boost your energy, mood, and overall well\u2011being."
+  },
+  "pcoa_class_bray_with_stats.png": {
+    "plot_type": "pcoa",
+    "taxonomic_level": "class",
+    "explanation": "This chart shows how similar or different the groups of gut bacteria are in your samples, like a map of neighborhoods where each dot is a person\u2019s gut community. If dots cluster together, it means those people share a similar gut \u201cflavor,\u201d which can be linked to feeling better or having stronger digestion. Seeing where you fit helps you understand your gut health and spot ways to improve it, like adding foods that encourage friendly bacteria."
+  },
+  "pcoa_phylum_bray_with_stats.png": {
+    "plot_type": "pcoa",
+    "taxonomic_level": "phylum",
+    "explanation": "On this chart each dot is a person\u2019s gut, and the distance between dots shows how similar their gut bacteria are\u2014dots that sit close together have similar big bacterial families, while dots that are far apart have different ones. If your dot is near the cluster of healthy dots, it means your gut is balanced; if it\u2019s on the edge or far away, it might suggest a shift that could affect your digestion or mood. Seeing where you fall on this map lets you track changes and make choices that support a happier gut."
+  }
+}

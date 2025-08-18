@@ -26,6 +26,94 @@ class TaxaRequestHandler(http.server.SimpleHTTPRequestHandler):
             # Serve static files normally
             super().do_GET()
     
+    def do_POST(self):
+        """Handle POST requests for AI analysis"""
+        parsed_url = urllib.parse.urlparse(self.path)
+        path = parsed_url.path
+        
+        if path == '/cgi-bin/ai_analyze.py':
+            self.handle_ai_analysis_request()
+        else:
+            self.send_error(405, "Method not allowed")
+    
+    def handle_ai_analysis_request(self):
+        """Handle AI analysis requests"""
+        try:
+            # Get content length
+            content_length = int(self.headers.get('Content-Length', 0))
+            if content_length > 0:
+                # Read POST data
+                post_data = self.rfile.read(content_length).decode('utf-8')
+                
+                # Parse form data (simple parsing for multipart/form-data)
+                form_data = {}
+                if 'multipart/form-data' in self.headers.get('Content-Type', ''):
+                    # Parse multipart form data
+                    boundary = self.headers.get('Content-Type').split('boundary=')[1]
+                    parts = post_data.split('--' + boundary)
+                    
+                    for part in parts:
+                        if 'name=' in part and 'Content-Type:' not in part:
+                            lines = part.strip().split('\r\n')
+                            if len(lines) >= 3:
+                                name_line = lines[0]
+                                value = lines[-1]
+                                
+                                if 'name="' in name_line:
+                                    name = name_line.split('name="')[1].split('"')[0]
+                                    form_data[name] = value
+                
+                # Call AI analyzer
+                result = self.run_ai_analyzer(form_data)
+                self.send_json_response(result)
+            else:
+                self.send_error_response('No data received')
+                
+        except Exception as e:
+            self.send_error_response(f'AI analysis error: {str(e)}')
+    
+    def run_ai_analyzer(self, form_data):
+        """Run the AI analyzer with form data"""
+        try:
+            # Import and use the AI analyzer
+            import sys
+            sys.path.append(os.getcwd())
+            
+            from ai_realtime_analyzer import RealTimeMicrobiomeAnalyzer
+            
+            analyzer = RealTimeMicrobiomeAnalyzer()
+            
+            plot_type = form_data.get('plot_type', '')
+            taxon_name = form_data.get('taxon_name', '')
+            
+            if plot_type == 'taxon_plot' and taxon_name:
+                # Parse JSON data
+                import json
+                sample_data = json.loads(form_data.get('sample_data', '{}'))
+                sample_names = json.loads(form_data.get('sample_names', '[]'))
+                rpm_values = json.loads(form_data.get('rpm_values', '[]'))
+                
+                analysis = analyzer.analyze_taxon_plot(taxon_name, sample_data, sample_names, rpm_values)
+                
+                return {
+                    'success': True,
+                    'analysis': analysis,
+                    'plot_type': plot_type,
+                    'taxon_name': taxon_name
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': 'Invalid plot type or missing parameters'
+                }
+                
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e),
+                'type': 'server_error'
+            }
+    
     def handle_taxa_request(self, query):
         """Handle requests to the extract_taxa.py script"""
         try:
@@ -104,7 +192,7 @@ class TaxaRequestHandler(http.server.SimpleHTTPRequestHandler):
 
 def main():
     """Main function to start the server"""
-    PORT = 8000
+    PORT = 8001
     
     # Change to the directory containing this script
     script_dir = Path(__file__).parent
