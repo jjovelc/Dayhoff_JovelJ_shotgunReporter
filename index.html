@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microbiome Analysis Results</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 300px;
+            background-color: #1E5D96;
+            color: white;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        .sidebar h1 {
+            font-size: 24px;
+            margin-bottom: 30px;
+            text-align: center;
+            border-bottom: 2px solid #A4A6A6;
+            padding-bottom: 10px;
+        }
+
+        .dropdown-group {
+            margin-bottom: 25px;
+        }
+
+        .dropdown-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #ecf0f1;
+        }
+
+        .dropdown-group select {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4675b0;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .dropdown-group select:focus {
+            outline: none;
+            box-shadow: 0 0 5px #2c64f6;
+        }
+
+        .dropdown-group select option {
+            background-color: #1358ae;
+            color: white;
+            padding: 10px;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            background-color: white;
+        }
+
+        .content-header {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .content-header h2 {
+            color: #2c3e50;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .content-header p {
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+
+        .results-area {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 30px;
+            min-height: 400px;
+            border: 2px dashed #bdc3c7;
+        }
+
+        .results-area.empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #95a5a6;
+            font-size: 18px;
+        }
+
+        .image-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .image-container h3 {
+            margin: 15px 0;
+            color: #2c3e50;
+        }
+
+        .stats-info {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #3498db;
+        }
+
+        .stats-info h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .stats-info p {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .krona-container {
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+
+        .krona-container iframe {
+            background-color: white;
+        }
+
+        code {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Sidebar -->
+        <div class="sidebar">
+            <h1>Microbiome Analysis</h1>
+            
+            <!-- First Dropdown: Analysis Type -->
+            <div class="dropdown-group">
+                <label for="analysisType">Analysis Type:</label>
+                <select id="analysisType" onchange="updateSecondDropdown()">
+                    <option value="">Select Analysis Type</option>
+                    <option value="alpha">Alpha Diversity</option>
+                    <option value="beta">Beta Diversity</option>
+                    <option value="stacked">Stacked Bar Plots</option>
+                    <option value="krona">Krona Plots</option>
+                    <option value="specific_taxon">Visualize Specific Taxon</option>
+                </select>
+            </div>
+
+            <!-- Second Dropdown: Specific Options -->
+            <div class="dropdown-group">
+                <label for="specificOption">Select Option:</label>
+                <select id="specificOption" onchange="updateTaxaDropdown()">
+                    <option value="">Select an option first</option>
+                </select>
+            </div>
+
+            <!-- Third Dropdown: Specific Taxa (for specific taxon) -->
+            <div class="dropdown-group" id="specificTaxaGroup" style="display: none;">
+                <label for="specificTaxa">Select Taxon:</label>
+                <select id="specificTaxa" onchange="displayResults()">
+                    <option value="">Select a taxon first</option>
+                </select>
+            </div>
+
+            <!-- Color Picker Group (for specific taxon) -->
+            <div class="dropdown-group" id="colorPickerGroup" style="display: none;">
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <div>
+                        <label for="controlColor" style="font-size: 12px; margin-bottom: 5px;">Control Color:</label>
+                        <input type="color" id="controlColor" value="#4BC0C0" style="width: 50px; height: 30px; border: none; border-radius: 5px; cursor: pointer;">
+                    </div>
+                    <div>
+                        <label for="ucColor" style="font-size: 12px; margin-bottom: 5px;">UC Color:</label>
+                        <input type="color" id="ucColor" value="#FF6384" style="width: 50px; height: 30px; border: none; border-radius: 5px; cursor: pointer;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <div class="content-header">
+                <h2>Microbiome Analysis Results</h2>
+                <p>Select an analysis type and specific option from the sidebar to view results</p>
+            </div>
+
+            <div class="results-area empty" id="resultsArea">
+                <p>Please select an analysis type and option to view results</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data structure for the dropdowns
+        const analysisOptions = {
+            alpha: {
+                name: "Alpha Diversity",
+                options: [
+                    { value: "kingdom_shannon", label: "Kingdom - Shannon", file: "alpha_diversity_kingdom_Shannon.png" },
+                    { value: "phylum_shannon", label: "Phylum - Shannon", file: "alpha_diversity_phylum_Shannon.png" },
+                    { value: "class_shannon", label: "Class - Shannon", file: "alpha_diversity_class_Shannon.png" },
+                    { value: "order_shannon", label: "Order - Shannon", file: "alpha_diversity_order_Shannon.png" },
+                    { value: "family_shannon", label: "Family - Shannon", file: "alpha_diversity_family_Shannon.png" },
+                    { value: "genus_shannon", label: "Genus - Shannon", file: "alpha_diversity_genus_Shannon.png" },
+                    { value: "species_shannon", label: "Species - Shannon", file: "alpha_diversity_species_Shannon.png" }
+                ]
+            },
+            beta: {
+                name: "Beta Diversity",
+                options: [
+                    { value: "kingdom_bray", label: "Kingdom - Bray-Curtis", file: "pcoa_kingdom_bray_with_stats.png" },
+                    { value: "phylum_bray", label: "Phylum - Bray-Curtis", file: "pcoa_phylum_bray_with_stats.png" },
+                    { value: "class_bray", label: "Class - Bray-Curtis", file: "pcoa_class_bray_with_stats.png" },
+                    { value: "order_bray", label: "Order - Bray-Curtis", file: "pcoa_order_bray_with_stats.png" },
+                    { value: "family_bray", label: "Family - Bray-Curtis", file: "pcoa_family_bray_with_stats.png" },
+                    { value: "genus_bray", label: "Genus - Bray-Curtis", file: "pcoa_genus_bray_with_stats.png" },
+                    { value: "species_bray", label: "Species - Bray-Curtis", file: "pcoa_species_bray_with_stats.png" }
+                ]
+            },
+            stacked: {
+                name: "Stacked Bar Plots",
+                options: [
+                    { value: "phylum_stacked", label: "Phylum - Top 20", file: "stacked_barplot_phylum_top20.png" },
+                    { value: "class_stacked", label: "Class - Top 20", file: "stacked_barplot_class_top20.png" },
+                    { value: "order_stacked", label: "Order - Top 20", file: "stacked_barplot_order_top20.png" },
+                    { value: "family_stacked", label: "Family - Top 20", file: "stacked_barplot_family_top20.png" },
+                    { value: "genus_stacked", label: "Genus - Top 20", file: "stacked_barplot_genus_top20.png" },
+                    { value: "species_stacked", label: "Species - Top 20", file: "stacked_barplot_species_top20.png" }
+                ]
+            },
+            krona: {
+                name: "Krona Plots",
+                options: [
+                    { value: "all_samples", label: "All Samples Combined", file: "all_krona_plots.html", type: "html" }
+                ]
+            }
+        };
+
+        function updateSecondDropdown() {
+            const analysisType = document.getElementById('analysisType').value;
+            const specificOption = document.getElementById('specificOption');
+            const specificTaxaGroup = document.getElementById('specificTaxaGroup');
+            const colorPickerGroup = document.getElementById('colorPickerGroup');
+            
+            // Clear all dropdowns
+            specificOption.innerHTML = '<option value="">Select an option first</option>';
+            specificTaxaGroup.style.display = 'none';
+            colorPickerGroup.style.display = 'none';
+            
+            if (analysisType === 'specific_taxon') {
+                // Add taxonomic levels as options
+                const taxonomicLevels = [
+                    { value: "2", label: "Phylum" },
+                    { value: "3", label: "Class" },
+                    { value: "4", label: "Order" },
+                    { value: "5", label: "Family" },
+                    { value: "6", label: "Genus" },
+                    { value: "7", label: "Species" }
+                ];
+                
+                taxonomicLevels.forEach(level => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = level.value;
+                    optionElement.textContent = level.label;
+                    specificOption.appendChild(optionElement);
+                });
+            } else if (analysisType && analysisOptions[analysisType]) {
+                // Add options for the selected analysis type
+                analysisOptions[analysisType].options.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option.value;
+                    optionElement.textContent = option.label;
+                    specificOption.appendChild(optionElement);
+                });
+            }
+        }
+
+        function updateTaxaDropdown() {
+            const analysisType = document.getElementById('analysisType').value;
+            const specificOption = document.getElementById('specificOption').value;
+            const specificTaxaGroup = document.getElementById('specificTaxaGroup');
+            const colorPickerGroup = document.getElementById('colorPickerGroup');
+            
+            console.log('updateTaxaDropdown called:', { analysisType, specificOption });
+            
+            if (analysisType === 'specific_taxon' && specificOption) {
+                // Fetch taxa for the selected taxonomic level
+                console.log('Fetching taxa for level:', specificOption);
+                fetchTaxaForLevel(specificOption);
+                specificTaxaGroup.style.display = 'block';
+                colorPickerGroup.style.display = 'block';
+                // Re-setup color picker listeners when showing the group
+                setupColorPickerListeners();
+            } else if (analysisType === 'specific_taxon') {
+                // Hide taxa dropdown if no level selected
+                console.log('Hiding taxa dropdown - no level selected');
+                specificTaxaGroup.style.display = 'none';
+                colorPickerGroup.style.display = 'none';
+            } else if (specificOption) {
+                // For other analysis types, display results
+                console.log('Displaying results for other analysis type');
+                displayResults();
+            }
+        }
+
+        async function fetchTaxaForLevel(level) {
+            const specificTaxa = document.getElementById('specificTaxa');
+            specificTaxa.innerHTML = '<option value="">Loading taxa...</option>';
+            
+            try {
+                // Use the full server URL since this might be opened as a local file
+                const serverUrl = window.location.protocol === 'file:' ? 'http://localhost:8000' : '';
+                const fullUrl = `${serverUrl}/cgi-bin/extract_taxa.py?command=get_taxa&level=${level}`;
+                
+                console.log('Fetching taxa from URL:', fullUrl);
+                console.log('Current location protocol:', window.location.protocol);
+                
+                const response = await fetch(fullUrl);
+                
+                console.log('Response received:', response.status, response.statusText);
+                
+                if (response.ok) {
+                    const taxa = await response.json();
+                    console.log('Taxa loaded:', taxa.length, 'taxa');
+                    specificTaxa.innerHTML = '<option value="">Select a taxon</option>';
+                    taxa.forEach(taxon => {
+                        const option = document.createElement('option');
+                        option.value = taxon;
+                        option.textContent = taxon;
+                        specificTaxa.appendChild(option);
+                    });
+                } else {
+                    console.error('Server response not OK:', response.status, response.statusText);
+                    specificTaxa.innerHTML = '<option value="">Error loading taxa</option>';
+                }
+            } catch (error) {
+                console.error('Error fetching taxa:', error);
+                specificTaxa.innerHTML = '<option value="">Error loading taxa</option>';
+            }
+        }
+
+        async function displaySpecificTaxonResults(level, taxon, resultsArea) {
+            resultsArea.className = 'results-area';
+            resultsArea.innerHTML = '<p>Loading data for ' + taxon + '...</p>';
+            
+            try {
+                // Use the full server URL since this might be opened as a local file
+                const serverUrl = window.location.protocol === 'file:' ? 'http://localhost:8000' : '';
+                const url = `${serverUrl}/cgi-bin/extract_taxa.py?command=get_data&level=${level}&taxon=${encodeURIComponent(taxon)}`;
+                
+                console.log('Fetching data from URL:', url);
+                
+                const response = await fetch(url);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Data received from API:', data);
+                    console.log('Data type:', typeof data);
+                    console.log('Data keys:', Object.keys(data));
+                    
+                    displayTaxonBarPlot(data, taxon, resultsArea);
+                } else {
+                    console.error('Server response not OK:', response.status, response.statusText);
+                    resultsArea.innerHTML = '<p>Error loading data for ' + taxon + '</p>';
+                }
+            } catch (error) {
+                console.error('Error fetching taxon data:', error);
+                resultsArea.innerHTML = '<p>Error loading data for ' + taxon + '</p>';
+            }
+        }
+
+        function displayTaxonBarPlot(data, taxon, resultsArea) {
+            console.log('displayTaxonBarPlot called with data:', data, 'taxon:', taxon);
+            
+            const levelNames = {
+                '2': 'Phylum',
+                '3': 'Class',
+                '4': 'Order',
+                '5': 'Family',
+                '6': 'Genus',
+                '7': 'Species'
+            };
+            
+            const levelName = levelNames[document.getElementById('specificOption').value] || 'Taxonomic Level';
+            
+            // Create the bar plot using Chart.js
+            const content = `
+                <div class="content-header">
+                    <h3>${taxon} - ${levelName} Level</h3>
+                </div>
+                <div class="chart-container" style="position: relative; height:400px; width:100%; margin: 20px 0; background-color: white; padding: 20px; border-radius: 5px;">
+                    <canvas id="taxonChart" style="background-color: white;"></canvas>
+                </div>
+                <div class="download-buttons" style="text-align: center; margin: 20px 0;">
+                    <button onclick="downloadChart('png')" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; margin: 0 10px; border-radius: 5px; cursor: pointer;">Download PNG</button>
+                    <button onclick="downloadChart('pdf')" style="background: #2196F3; color: white; border: none; padding: 10px 20px; margin: 0 10px; border-radius: 5px; cursor: pointer;">Download PDF</button>
+                </div>
+                <div class="stats-info">
+                    <h4>What This Plot Shows</h4>
+                    <p><strong>Simple Explanation:</strong> This bar plot shows how much of the specific microbe "${taxon}" is present in each sample, normalized to reads per million (RPM) to make samples comparable.</p>
+                    <p><strong>What to Look For:</strong> Compare the height of the Control bar (green) with the UC bars (red). If there's a big difference, it suggests this microbe might be important for health or disease.</p>
+                    <p><strong>Why It Matters:</strong> Understanding which specific microbes are more or less abundant in healthy vs. diseased individuals helps identify potential therapeutic targets or biomarkers.</p>
+                </div>
+                <div class="stats-info" style="background-color: #f8f9fa;">
+                    <h4>Data Summary</h4>
+                    <p><strong>Control Sample (PedCtrl59):</strong> ${data.control.toFixed(2)} RPM</p>
+                    <p><strong>UC Samples:</strong></p>
+                    <ul>
+                        <li>PedUC47: ${data.uc_samples[0].toFixed(2)} RPM</li>
+                        <li>PedUC58: ${data.uc_samples[1].toFixed(2)} RPM</li>
+                        <li>PedUC60: ${data.uc_samples[2].toFixed(2)} RPM</li>
+                    </ul>
+                    <p><strong>UC Mean:</strong> ${data.uc_mean.toFixed(2)} RPM</p>
+                </div>
+            `;
+            
+            resultsArea.innerHTML = content;
+            
+            // Create the chart after the DOM is updated
+            setTimeout(() => {
+                console.log('Creating chart for taxon:', taxon);
+                const chart = createTaxonChart(data, taxon);
+                if (chart) {
+                    console.log('Chart created successfully');
+                } else {
+                    console.error('Failed to create chart');
+                }
+            }, 100);
+        }
+
+        function createTaxonChart(data, taxon) {
+            console.log('createTaxonChart called with data:', data, 'taxon:', taxon);
+            
+            try {
+                // Check if Chart.js is available
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js is not loaded!');
+                alert('Chart.js library is not loaded. Please refresh the page.');
+                return null;
+            }
+            
+            console.log('Chart.js is available:', Chart);
+            
+            const canvas = document.getElementById('taxonChart');
+            if (!canvas) {
+                console.error('Canvas element not found');
+                return null;
+            }
+            
+            // Set canvas dimensions and white background
+            canvas.width = 800;
+            canvas.height = 400;
+            
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                console.error('Could not get 2D context from canvas');
+                return null;
+            }
+            
+            // Fill canvas with white background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            console.log('Canvas and context obtained successfully');
+            
+            // Validate data structure
+            console.log('Validating data structure:', data);
+            
+            if (!data) {
+                console.error('Data is null or undefined');
+                alert('No data received. Please try again.');
+                return null;
+            }
+            
+            if (typeof data.control === 'undefined') {
+                console.error('Control data missing:', data);
+                alert('Control data missing. Please try again.');
+                return null;
+            }
+            
+            if (!data.uc_samples || !Array.isArray(data.uc_samples)) {
+                console.error('UC samples data missing or not array:', data);
+                alert('UC samples data missing. Please try again.');
+                return null;
+            }
+            
+            if (data.uc_samples.length < 3) {
+                console.error('Not enough UC samples:', data.uc_samples.length);
+                alert('Not enough UC samples. Please try again.');
+                return null;
+            }
+            
+            console.log('Data validation passed - Control:', data.control, 'UC samples:', data.uc_samples);
+            
+            // Get the selected colors from the color pickers
+            const controlColor = document.getElementById('controlColor').value;
+            const ucColor = document.getElementById('ucColor').value;
+            
+            console.log('Colors selected - Control:', controlColor, 'UC:', ucColor);
+            
+            // Convert hex colors to rgba for transparency
+            const controlColorRgba = hexToRgba(controlColor, 0.8);
+            const ucColorRgba = hexToRgba(ucColor, 0.8);
+            // Use black borders for all bars
+            const blackBorder = 'rgba(0, 0, 0, 1)';
+            
+            console.log('Color conversion completed - Control RGBA:', controlColorRgba, 'UC RGBA:', ucColorRgba);
+            
+            // Create the chart and store it globally for color updates
+            // Set canvas background to white before creating chart
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Control (PedCtrl59)', 'UC (PedUC47)', 'UC (PedUC58)', 'UC (PedUC60)'],
+                    datasets: [{
+                        label: `${taxon} (RPM)`,
+                        data: [data.control, data.uc_samples[0], data.uc_samples[1], data.uc_samples[2]],
+                        backgroundColor: [
+                            controlColorRgba,  // Control color
+                            ucColorRgba,      // UC color
+                            ucColorRgba,      // UC color
+                            ucColorRgba       // UC color
+                        ],
+                        borderColor: [
+                            blackBorder,  // Control border
+                            blackBorder,  // UC border
+                            blackBorder,  // UC border
+                            blackBorder   // UC border
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Reads Per Million (RPM)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Sample Groups'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `${taxon} Abundance Across Samples`,
+                            font: {
+                                size: 16
+                            }
+                        },
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            
+            // Store the chart globally for color updates
+            window.activeChart = chart;
+            
+            console.log('Chart created and stored globally:', chart);
+            console.log('Chart data:', chart.data);
+            console.log('Chart options:', chart.options);
+            
+            return chart;
+            
+            } catch (error) {
+                console.error('Error creating chart:', error);
+                alert('Error creating chart: ' + error.message);
+                return null;
+            }
+        }
+
+        // Helper function to convert hex color to rgba
+        function hexToRgba(hex, alpha) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+
+
+        // Download chart functions
+        function downloadChart(format) {
+            if (!window.activeChart) {
+                alert('No chart available to download');
+                return;
+            }
+
+            const chart = window.activeChart;
+            const taxon = document.getElementById('specificTaxa').value;
+            const level = document.getElementById('specificOption').value;
+            const levelNames = {
+                '2': 'Phylum',
+                '3': 'Class',
+                '4': 'Order',
+                '5': 'Family',
+                '6': 'Genus',
+                '7': 'Species'
+            };
+            const levelName = levelNames[level] || 'Taxonomic_Level';
+            
+            let filename = `${taxon}_${levelName}_abundance.${format}`;
+            
+            if (format === 'png') {
+                // Download as PNG with white background
+                const canvas = chart.canvas;
+                const ctx = canvas.getContext('2d');
+                
+                // Create a temporary canvas with white background
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                
+                // Fill with white background
+                tempCtx.fillStyle = 'white';
+                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                
+                // Draw the chart on top
+                tempCtx.drawImage(canvas, 0, 0);
+                
+                // Download the PNG with white background
+                const link = document.createElement('a');
+                link.download = filename;
+                link.href = tempCanvas.toDataURL('image/png', 1.0);
+                link.click();
+            } else if (format === 'pdf') {
+                // For PDF, we'll use jsPDF to create a PDF with the chart image
+                downloadAsPDF(chart, filename, taxon, levelName);
+            }
+        }
+
+        // Function to download chart as PDF using jsPDF
+        function downloadAsPDF(chart, filename, taxon, levelName) {
+            // Check if jsPDF is available
+            if (typeof jsPDF === 'undefined') {
+                // If jsPDF is not loaded, load it dynamically
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+                script.onload = function() {
+                    createPDF(chart, filename, taxon, levelName);
+                };
+                document.head.appendChild(script);
+            } else {
+                createPDF(chart, filename, taxon, levelName);
+            }
+        }
+
+        function createPDF(chart, filename, taxon, levelName) {
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF();
+                
+                // Add title
+                pdf.setFontSize(16);
+                pdf.text(`${taxon} Abundance - ${levelName} Level`, 20, 20);
+                
+                // Add chart image
+                const chartImage = chart.toBase64Image();
+                pdf.addImage(chartImage, 'PNG', 20, 40, 170, 100);
+                
+                // Add sample information
+                pdf.setFontSize(12);
+                pdf.text('Sample Information:', 20, 160);
+                pdf.setFontSize(10);
+                pdf.text(`Control (PedCtrl59): ${chart.data.datasets[0].data[0].toFixed(2)} RPM`, 20, 170);
+                pdf.text(`UC (PedUC47): ${chart.data.datasets[0].data[1].toFixed(2)} RPM`, 20, 180);
+                pdf.text(`UC (PedUC58): ${chart.data.datasets[0].data[2].toFixed(2)} RPM`, 20, 190);
+                pdf.text(`UC (PedUC60): ${chart.data.datasets[0].data[3].toFixed(2)} RPM`, 20, 200);
+                
+                // Save the PDF
+                pdf.save(filename);
+            } catch (error) {
+                console.error('Error creating PDF:', error);
+                alert('Error creating PDF. Please try downloading as PNG instead.');
+            }
+        }
+
+        // Function to update Krona labels automatically
+        function updateKronaLabels() {
+            // This function will be called when the page loads
+            // In a real implementation, you would call the Python script here
+            // For now, we'll just ensure the labels are correct
+            console.log("Krona labels should be updated with sample names from metadata.tsv");
+        }
+
+        // Call updateKronaLabels when the page loads
+        window.addEventListener('load', function() {
+            updateKronaLabels();
+            setupColorPickerListeners();
+        });
+
+        // Setup color picker event listeners
+        function setupColorPickerListeners() {
+            const controlColorPicker = document.getElementById('controlColor');
+            const ucColorPicker = document.getElementById('ucColor');
+            
+            if (controlColorPicker && ucColorPicker) {
+                // Remove existing listeners to prevent duplicates
+                controlColorPicker.removeEventListener('change', handleControlColorChange);
+                ucColorPicker.removeEventListener('change', handleUCColorChange);
+                
+                // Add new listeners
+                controlColorPicker.addEventListener('change', handleControlColorChange);
+                ucColorPicker.addEventListener('change', handleUCColorChange);
+                
+                console.log('Color picker listeners set up successfully');
+            }
+        }
+
+        // Handler functions for color changes
+        function handleControlColorChange() {
+            console.log('Control color changed to:', this.value);
+            if (window.activeChart) {
+                updateChartColors(window.activeChart);
+            }
+        }
+
+        function handleUCColorChange() {
+            console.log('UC color changed to:', this.value);
+            if (window.activeChart) {
+                updateChartColors(window.activeChart);
+            }
+        }
+
+        // Function to update chart colors when color pickers change
+        function updateChartColors(chart) {
+            if (!chart || !chart.data || !chart.data.datasets || !chart.data.datasets[0]) {
+                console.log('Chart not ready for color update');
+                return;
+            }
+            
+            const controlColor = document.getElementById('controlColor').value;
+            const ucColor = document.getElementById('ucColor').value;
+            
+            const controlColorRgba = hexToRgba(controlColor, 0.8);
+            const ucColorRgba = hexToRgba(ucColor, 0.8);
+            // Use black borders for all bars
+            const blackBorder = 'rgba(0, 0, 0, 1)';
+            
+            // Update the chart colors
+            chart.data.datasets[0].backgroundColor = [
+                controlColorRgba,  // Control color
+                ucColorRgba,      // UC color
+                ucColorRgba,      // UC color
+                ucColorRgba       // UC color
+            ];
+            
+            chart.data.datasets[0].borderColor = [
+                blackBorder,  // Control border
+                blackBorder,  // UC border
+                blackBorder,  // UC border
+                blackBorder   // UC border
+            ];
+            
+            chart.update('none'); // Update without animation for better performance
+            console.log('Chart colors updated successfully');
+        }
+
+        function displayResults() {
+            const analysisType = document.getElementById('analysisType').value;
+            const specificOption = document.getElementById('specificOption').value;
+            const specificTaxa = document.getElementById('specificTaxa').value;
+            const resultsArea = document.getElementById('resultsArea');
+            
+            if (analysisType === 'specific_taxon') {
+                if (!specificOption || !specificTaxa) {
+                    resultsArea.className = 'results-area empty';
+                    resultsArea.innerHTML = '<p>Please select a taxonomic level and taxon to view results</p>';
+                    return;
+                }
+                // Handle specific taxon visualization
+                displaySpecificTaxonResults(specificOption, specificTaxa, resultsArea);
+                return;
+            }
+            
+            if (!analysisType || !specificOption) {
+                resultsArea.className = 'results-area empty';
+                resultsArea.innerHTML = '<p>Please select an analysis type and option to view results</p>';
+                return;
+            }
+            
+            // Find the selected option
+            const selectedOption = analysisOptions[analysisType].options.find(opt => opt.value === specificOption);
+            
+            if (selectedOption) {
+                resultsArea.className = 'results-area';
+                
+                let content = '';
+                
+                if (analysisType === 'alpha') {
+                    content = `
+                        <div class="content-header">
+                            <h3>${selectedOption.label}</h3>
+                        </div>
+                        <div class="image-container">
+                            <img src="${selectedOption.file}" alt="${selectedOption.label}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <p style="display:none; color: #e74c3c;">Image not found: ${selectedOption.file}</p>
+                        </div>
+                        <div class="stats-info">
+                            <h4>What This Plot Shows</h4>
+                            <p><strong>Simple Explanation:</strong> This plot is like taking a "census" of the microbes living inside each person's gut. The Shannon index tells us how diverse and balanced the microbial community is - think of it like measuring how many different types of animals live in a forest and how evenly they're distributed.</p>
+                            <p><strong>What to Look For:</strong> Higher bars mean more diverse microbial communities. If the bars are very different between Control and UC groups, it suggests that the disease affects the variety of microbes in the gut.</p>
+                            <p><strong>Why It Matters:</strong> A healthy gut usually has many different types of microbes working together. If someone has fewer types (lower diversity), it might indicate an imbalance that could be related to their health condition.</p>
+                        </div>
+                    `;
+                } else if (analysisType === 'beta') {
+                    content = `
+                        <div class="content-header">
+                            <h3>${selectedOption.label}</h3>
+                        </div>
+                        <div class="image-container">
+                            <img src="${selectedOption.file}" alt="${selectedOption.label}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <p style="display:none; color: #e74c3c;">Image not found: ${selectedOption.file}</p>
+                        </div>
+                        <div class="stats-info">
+                            <h4>What This Plot Shows</h4>
+                            <p><strong>Simple Explanation:</strong> This plot is like a "map" that shows how similar or different each person's gut microbiome is to everyone else's. Think of it like plotting cities on a map - cities that are close together are more similar, cities far apart are more different.</p>
+                            <p><strong>What to Look For:</strong> Points that are close together represent people with similar gut microbes. If all the Control samples cluster together and all the UC samples cluster together, it means the disease creates a distinct pattern in the gut microbiome.</p>
+                            <p><strong>Why It Matters:</strong> This helps us see if people with the same health condition have similar gut microbiomes, which could help develop treatments or understand how the disease affects the gut.</p>
+                        </div>
+                    `;
+                } else if (analysisType === 'stacked') {
+                    content = `
+                        <div class="content-header">
+                            <h3>${selectedOption.label}</h3>
+                        </div>
+                        <div class="image-container">
+                            <img src="${selectedOption.file}" alt="${selectedOption.label}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <p style="display:none; color: #e74c3c;">Image not found: ${selectedOption.file}</p>
+                        </div>
+                        <div class="stats-info">
+                            <h4>What This Plot Shows</h4>
+                            <p><strong>Simple Explanation:</strong> This plot is like a "recipe breakdown" showing what makes up each person's gut microbiome. Each colored section represents a different type of microbe, and the height shows how much of that microbe is present.</p>
+                            <p><strong>What to Look For:</strong> Look for patterns in the colored sections. If certain microbes (colors) appear more in one group than another, it suggests those microbes might be important for health or disease.</p>
+                            <p><strong>Why It Matters:</strong> Understanding which microbes are more or less abundant in healthy vs. diseased individuals helps identify potential "good" microbes that could be used as treatments or "bad" microbes that could be targets for therapy.</p>
+                        </div>
+                    `;
+                } else if (analysisType === 'krona') {
+                    let sampleDescription = "";
+                    if (selectedOption.value === "all_samples") {
+                        sampleDescription = "This interactive Krona plot shows the combined taxonomic composition across all samples. It provides an overview of the overall microbial diversity in your dataset.";
+                    } else {
+                        const sampleName = selectedOption.label.split(' ')[0];
+                        const sampleGroup = selectedOption.label.includes('UC') ? 'Ulcerative Colitis' : 'Control';
+                        sampleDescription = `This interactive Krona plot shows the taxonomic composition for sample ${sampleName} (${sampleGroup}). You can explore the microbial diversity specific to this individual sample.`;
+                    }
+                    
+                    content = `
+                        <div class="content-header">
+                            <h3>${selectedOption.label}</h3>
+                        </div>
+                        <div class="krona-container" style="width: 100%; height: 600px; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+                            <iframe src="${selectedOption.file}" style="width: 100%; height: 100%; border: none;" title="${selectedOption.label}"></iframe>
+                        </div>
+                        <div class="stats-info">
+                            <h4>What This Plot Shows</h4>
+                            <p><strong>Simple Explanation:</strong> This is like an interactive "family tree" of all the microbes found in the samples. It shows the different types of bacteria, viruses, and other microbes organized by their biological relationships, just like how animals are grouped into families, orders, and species.</p>
+                            <p><strong>What to Look For:</strong> The larger the section, the more abundant that type of microbe is. You can click on any section to zoom in and see more details about that group of microbes.</p>
+                            <p><strong>Why It Matters:</strong> This gives us a complete picture of what's living in the gut and helps identify which microbes might be important for health or disease. It's like having a detailed inventory of all the living things in an ecosystem.</p>
+                            <p><strong>How to Use:</strong> Use the mouse wheel to zoom in/out, click on different sections to explore specific taxonomic groups, and navigate through the microbial diversity hierarchy. The plot is fully interactive and allows you to drill down into specific taxa.</p>
+                        </div>
+                        <div class="stats-info" style="background-color: #e8f5e8; border-left-color: #4caf50;">
+                            <h4>Sample Labels Updated</h4>
+                            <p>The Krona plot now displays sample names (PedUC47, PedUC58, PedCtrl59, PedUC60) instead of SRR accession numbers, making it easier to identify each sample's contribution to the overall microbial composition.</p>
+                        </div>
+                        <div class="stats-info" style="background-color: #fff3cd; border-left-color: #ffc107;">
+                            <h4>Keeping Labels Updated</h4>
+                            <p>To ensure the Krona plot always shows the correct sample names, run this command in your terminal whenever you update your data:</p>
+                            <code style="background: #f8f9fa; padding: 8px; border-radius: 4px; display: block; margin: 10px 0;">python update_krona_labels.py</code>
+                            <p>This script automatically reads <code>metadata.tsv</code> and updates the Krona plot labels to match your current sample names.</p>
+                        </div>
+                    `;
+                }
+                
+                resultsArea.innerHTML = content;
+            }
+        }
+    </script>
+</body>
+</html>
