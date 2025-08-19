@@ -186,6 +186,18 @@ class RealTimeMicrobiomeAnalyzer:
             if not level_file or not os.path.exists(level_file):
                 return []
             
+            # Create mapping structure that relates each taxonomic file with its expected prefix
+            file_prefix_mapping = {
+                2: 'p__',  # phylum file -> only include taxa starting with p__
+                3: 'c__',  # class file -> only include taxa starting with c__
+                4: 'o__',  # order file -> only include taxa starting with o__
+                5: 'f__',  # family file -> only include taxa starting with f__
+                6: 'g__',  # genus file -> only include taxa starting with g__
+                7: 's__'   # species file -> only include taxa starting with s__
+            }
+            
+            expected_prefix = file_prefix_mapping[level]
+            
             # Read the data file
             df = pd.read_csv(level_file, sep='\t', index_col=0)
             
@@ -204,9 +216,10 @@ class RealTimeMicrobiomeAnalyzer:
             
             # Calculate ratios for each taxon
             taxa_ratios = []
+            filtered_count = 0
             
             for taxon in df.index:
-                # Extract only the taxon name at the specified level
+                # Extract the family-level designation from within the full taxonomic path
                 # The taxon string format is: k__Kingdom|p__Phylum|c__Class|o__Order|f__Family|g__Genus|s__Species
                 taxon_parts = taxon.split('|')
                 
@@ -220,35 +233,22 @@ class RealTimeMicrobiomeAnalyzer:
                     7: 's__'   # species
                 }[level]
                 
-                # Extract the taxon name at this level
+                # Look for the part that starts with our expected prefix
                 level_taxon = None
                 for part in taxon_parts:
                     if part.startswith(level_prefix):
                         level_taxon = part
                         break
                 
-                # If we can't find the level, try to extract a meaningful name
+                # Only include taxa that have the expected taxonomic level designation
                 if not level_taxon:
-                    # Look for the highest available level in the path
-                    available_prefixes = ['s__', 'g__', 'f__', 'o__', 'c__', 'p__']
-                    for prefix in available_prefixes:
-                        for part in taxon_parts:
-                            if part.startswith(prefix):
-                                level_taxon = part
-                                break
-                        if level_taxon:
-                            break
-                    
-                    # If still no prefix found, use the last part of the path
-                    if not level_taxon and taxon_parts:
-                        level_taxon = taxon_parts[-1]
+                    continue  # Skip taxa that don't have the requested level
                 
-                # Clean up the taxon name for better readability
-                if level_taxon:
-                    # Remove the prefix and replace underscores with spaces for better readability
-                    clean_name = level_taxon.split('__', 1)[-1] if '__' in level_taxon else level_taxon
-                    clean_name = clean_name.replace('_', ' ')
-                    level_taxon = clean_name
+                filtered_count += 1
+                
+                # Extract the taxon name at this level (remove prefix and clean up)
+                taxon_name = level_taxon[len(level_prefix):]  # Remove the prefix
+                clean_taxon_name = taxon_name.replace('_', ' ')  # Replace underscores with spaces
                 
                 # Get abundances for this taxon
                 control_values = [df.loc[taxon, sample] for sample in control_samples if sample in df.columns]
@@ -266,7 +266,7 @@ class RealTimeMicrobiomeAnalyzer:
                 
                 # Add to results
                 taxa_ratios.append({
-                    'taxon': level_taxon,  # Use the extracted level-specific taxon name
+                    'taxon': f"{level_prefix}{clean_taxon_name}",  # Keep prefix for verification
                     'control_avg': control_avg,
                     'uc_avg': uc_avg,
                     'control_uc_ratio': ratio,
