@@ -22,6 +22,8 @@ class TaxaRequestHandler(http.server.SimpleHTTPRequestHandler):
         # Handle API calls to extract_taxa.py
         if path == '/cgi-bin/extract_taxa.py':
             self.handle_taxa_request(query)
+        elif path == '/cgi-bin/taxa_comparison.py':
+            self.handle_taxa_comparison_request(query)
         else:
             # Serve static files normally
             super().do_GET()
@@ -85,6 +87,7 @@ class TaxaRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             plot_type = form_data.get('plot_type', '')
             taxon_name = form_data.get('taxon_name', '')
+            taxonomic_level = form_data.get('taxonomic_level', '')
             
             if plot_type == 'taxon_plot' and taxon_name:
                 # Parse JSON data
@@ -101,6 +104,89 @@ class TaxaRequestHandler(http.server.SimpleHTTPRequestHandler):
                     'plot_type': plot_type,
                     'taxon_name': taxon_name
                 }
+                
+            elif plot_type == 'alpha_diversity':
+                # Extract actual diversity data and analyze
+                if not taxonomic_level:
+                    taxonomic_level = 'phylum'  # Default to phylum level
+                
+                diversity_data = analyzer.extract_alpha_diversity_data(taxonomic_level)
+                
+                if diversity_data:
+                    analysis = analyzer.analyze_diversity_plot(plot_type, diversity_data)
+                    return {
+                        'success': True,
+                        'analysis': analysis,
+                        'plot_type': plot_type,
+                        'taxonomic_level': taxonomic_level,
+                        'data_points': len(diversity_data)
+                    }
+                else:
+                    # Fallback if data extraction fails
+                    analysis = analyzer._generate_fallback_diversity_analysis(plot_type, {})
+                    return {
+                        'success': True,
+                        'analysis': analysis,
+                        'plot_type': plot_type,
+                        'taxonomic_level': taxonomic_level,
+                        'data_points': 0
+                    }
+                    
+            elif plot_type == 'pcoa':
+                # Extract actual abundance data and analyze
+                if not taxonomic_level:
+                    taxonomic_level = 'phylum'  # Default to phylum level
+                
+                abundances = analyzer.extract_pcoa_data(taxonomic_level)
+                
+                if abundances:
+                    analysis = analyzer.analyze_pcoa_plot(plot_type, abundances)
+                    return {
+                        'success': True,
+                        'analysis': analysis,
+                        'plot_type': plot_type,
+                        'taxonomic_level': taxonomic_level,
+                        'data_points': len(abundances)
+                    }
+                else:
+                    # Fallback if data extraction fails
+                    analysis = analyzer._generate_fallback_pcoa_analysis(plot_type, {})
+                    return {
+                        'success': True,
+                        'analysis': analysis,
+                        'plot_type': plot_type,
+                        'taxonomic_level': taxonomic_level,
+                        'data_points': 0
+                    }
+                    
+            elif plot_type == 'stacked_barplot':
+                # Extract actual abundance data and analyze
+                if not taxonomic_level:
+                    taxonomic_level = 'phylum'  # Default to phylum level
+                
+                top_taxa, abundances = analyzer.extract_stacked_barplot_data(taxonomic_level)
+                
+                if top_taxa and abundances:
+                    analysis = analyzer.analyze_stacked_plot(plot_type, top_taxa, abundances)
+                    return {
+                        'success': True,
+                        'analysis': analysis,
+                        'plot_type': plot_type,
+                        'taxonomic_level': taxonomic_level,
+                        'top_taxa_count': len(top_taxa),
+                        'sample_count': len(abundances)
+                    }
+                else:
+                    # Fallback if data extraction fails
+                    analysis = analyzer._generate_fallback_stacked_analysis(plot_type, [], {})
+                    return {
+                        'success': True,
+                        'analysis': analysis,
+                        'plot_type': plot_type,
+                        'taxonomic_level': taxonomic_level,
+                        'top_taxa_count': 0,
+                        'sample_count': 0
+                    }
             else:
                 return {
                     'success': False,
@@ -141,6 +227,110 @@ class TaxaRequestHandler(http.server.SimpleHTTPRequestHandler):
                 
         except Exception as e:
             self.send_error_response(f'Server error: {str(e)}')
+    
+    def handle_taxa_comparison_request(self, query):
+        """Handle requests for taxa comparison tables"""
+        try:
+            command = query.get('command', [None])[0]
+            level = query.get('level', [None])[0]
+            format_type = query.get('format', ['tsv'])[0]  # Default to TSV
+            
+            if not command or not level:
+                self.send_error_response('Missing command or level parameter')
+                return
+            
+            if command == 'get_comparison':
+                if format_type == 'tsv':
+                    self.send_taxa_comparison_tsv(level)
+                elif format_type == 'excel':
+                    self.send_taxa_comparison_excel(level)
+                else:
+                    self.send_error_response('Invalid format. Use "tsv" or "excel"')
+            else:
+                self.send_error_response('Invalid command')
+                
+        except Exception as e:
+            self.send_error_response(f'Server error: {str(e)}')
+    
+    def send_taxa_comparison_tsv(self, level):
+        """Send taxa comparison data as TSV"""
+        try:
+            # Import and use the AI analyzer
+            import sys
+            sys.path.append(os.getcwd())
+            
+            from ai_realtime_analyzer import RealTimeMicrobiomeAnalyzer
+            
+            analyzer = RealTimeMicrobiomeAnalyzer()
+            
+            # Map level number to taxonomic level name
+            level_mapping = {
+                "2": "phylum", "3": "class", "4": "order", 
+                "5": "family", "6": "genus", "7": "species"
+            }
+            
+            taxonomic_level = level_mapping.get(level, "family")
+            
+            # Generate TSV content
+            tsv_content = analyzer.generate_taxa_comparison_tsv(taxonomic_level)
+            
+            if not tsv_content:
+                self.send_error_response('No data available for this taxonomic level')
+                return
+            
+            # Send TSV response
+            filename = f"taxa_comparison_{taxonomic_level}.tsv"
+            
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/tab-separated-values')
+            self.send_header('Content-Disposition', f'attachment; filename="{filename}"')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            
+            self.wfile.write(tsv_content.encode('utf-8'))
+            
+        except Exception as e:
+            self.send_error_response(f'Error generating TSV: {str(e)}')
+    
+    def send_taxa_comparison_excel(self, level):
+        """Send taxa comparison data as Excel"""
+        try:
+            # Import and use the AI analyzer
+            import sys
+            sys.path.append(os.getcwd())
+            
+            from ai_realtime_analyzer import RealTimeMicrobiomeAnalyzer
+            
+            analyzer = RealTimeMicrobiomeAnalyzer()
+            
+            # Map level number to taxonomic level name
+            level_mapping = {
+                "2": "phylum", "3": "class", "4": "order", 
+                "5": "family", "6": "genus", "7": "species"
+            }
+            
+            taxonomic_level = level_mapping.get(level, "family")
+            
+            # Generate Excel content
+            excel_content = analyzer.generate_taxa_comparison_excel(taxonomic_level)
+            
+            if not excel_content:
+                self.send_error_response('No data available for this taxonomic level')
+                return
+            
+            # Send Excel response
+            filename = f"taxa_comparison_{taxonomic_level}.xlsx"
+            
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            self.send_header('Content-Disposition', f'attachment; filename="{filename}"')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            
+            self.wfile.write(excel_content)
+            
+        except Exception as e:
+            self.send_error_response(f'Error generating Excel: {str(e)}')
     
     def run_extract_taxa(self, command, *args):
         """Run the extract_taxa.py script with given arguments"""

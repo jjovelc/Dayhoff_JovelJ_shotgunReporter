@@ -59,6 +59,7 @@ def main():
         # Get parameters
         plot_type = form.getvalue('plot_type', '')
         taxon_name = form.getvalue('taxon_name', '')
+        taxonomic_level = form.getvalue('taxonomic_level', '')
         
         # Initialize analyzer
         analyzer = RealTimeMicrobiomeAnalyzer()
@@ -93,41 +94,74 @@ def main():
                 'taxon_name': taxon_name
             }
             
-        elif plot_type in ['alpha_diversity', 'beta_diversity']:
-            # For diversity plots
-            diversity_data_json = form.getvalue('diversity_data', '{}')
+        elif plot_type == 'alpha_diversity':
+            # For alpha diversity plots, extract actual data
+            if not taxonomic_level:
+                taxonomic_level = 'phylum'  # Default to phylum level
             
-            try:
-                diversity_data = json.loads(diversity_data_json)
-            except json.JSONDecodeError:
-                diversity_data = {}
+            # Extract actual diversity data from the TSV files
+            diversity_data = analyzer.extract_alpha_diversity_data(taxonomic_level)
             
-            analysis = analyzer.analyze_diversity_plot(plot_type, diversity_data)
+            if diversity_data:
+                # Generate AI analysis with real data
+                analysis = analyzer.analyze_diversity_plot(plot_type, diversity_data)
+            else:
+                # Fallback if data extraction fails
+                analysis = analyzer._generate_fallback_diversity_analysis(plot_type, {})
             
             response = {
                 'success': True,
                 'analysis': analysis,
-                'plot_type': plot_type
+                'plot_type': plot_type,
+                'taxonomic_level': taxonomic_level,
+                'data_points': len(diversity_data)
             }
             
-        elif plot_type in ['stacked_barplot']:
-            # For stacked bar plots
-            top_taxa_json = form.getvalue('top_taxa', '[]')
-            abundances_json = form.getvalue('abundances', '{}')
+        elif plot_type == 'pcoa':
+            # For PCoA plots, extract actual data
+            if not taxonomic_level:
+                taxonomic_level = 'phylum'  # Default to phylum level
             
-            try:
-                top_taxa = json.loads(top_taxa_json)
-                abundances = json.loads(abundances_json)
-            except json.JSONDecodeError:
-                top_taxa = []
-                abundances = {}
+            # Extract actual abundance data from the TSV files
+            abundances = analyzer.extract_pcoa_data(taxonomic_level)
             
-            analysis = analyzer.analyze_stacked_plot(plot_type, top_taxa, abundances)
+            if abundances:
+                # Generate AI analysis with real data
+                analysis = analyzer.analyze_pcoa_plot(plot_type, abundances)
+            else:
+                # Fallback if data extraction fails
+                analysis = analyzer._generate_fallback_pcoa_analysis(plot_type, {})
             
             response = {
                 'success': True,
                 'analysis': analysis,
-                'plot_type': plot_type
+                'plot_type': plot_type,
+                'taxonomic_level': taxonomic_level,
+                'data_points': len(abundances)
+            }
+            
+        elif plot_type == 'stacked_barplot':
+            # For stacked bar plots, extract actual data
+            if not taxonomic_level:
+                taxonomic_level = 'phylum'  # Default to phylum level
+            
+            # Extract actual abundance data from the TSV files
+            top_taxa, abundances = analyzer.extract_stacked_barplot_data(taxonomic_level)
+            
+            if top_taxa and abundances:
+                # Generate AI analysis with real data
+                analysis = analyzer.analyze_stacked_plot(plot_type, top_taxa, abundances)
+            else:
+                # Fallback if data extraction fails
+                analysis = analyzer._generate_fallback_stacked_analysis(plot_type, [], {})
+            
+            response = {
+                'success': True,
+                'analysis': analysis,
+                'plot_type': plot_type,
+                'taxonomic_level': taxonomic_level,
+                'top_taxa_count': len(top_taxa),
+                'sample_count': len(abundances)
             }
             
         else:

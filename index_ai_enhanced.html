@@ -549,11 +549,19 @@
                 colorPickerGroup.style.display = 'block';
                 // Re-setup color picker listeners when showing the group
                 setupColorPickerListeners();
+                
+                // Show the download table immediately when a level is selected
+                console.log('About to call showDownloadTableForLevel with:', specificOption);
+                showDownloadTableForLevel(specificOption);
             } else if (analysisType === 'specific_taxon') {
                 // Hide taxa dropdown if no level selected
                 console.log('Hiding taxa dropdown - no level selected');
                 specificTaxaGroup.style.display = 'none';
                 colorPickerGroup.style.display = 'none';
+                
+                // Hide the download table
+                console.log('About to call hideDownloadTable');
+                hideDownloadTable();
             } else if (specificOption) {
                 // For other analysis types, display results
                 console.log('Displaying results for other analysis type');
@@ -597,6 +605,83 @@
             }
         }
 
+        function showDownloadTableForLevel(level) {
+            console.log('showDownloadTableForLevel called with level:', level);
+            
+            const resultsArea = document.getElementById('resultsArea');
+            console.log('Results area element:', resultsArea);
+            
+            // Clear any existing content
+            resultsArea.className = 'results-area';
+            resultsArea.innerHTML = '';
+            
+            console.log('Creating download section for level:', level);
+            
+            // Create the download section
+            const downloadSection = document.createElement('div');
+            downloadSection.className = 'stats-info';
+            downloadSection.innerHTML = `
+                <div class="content-header">
+                    <h3>📊 Complete Taxonomic Comparison Table</h3>
+                    <p>You've selected the <strong>${getTaxonomicLevelName(level)}</strong> level. Download a comprehensive table showing Control/UC ratios for <strong>ALL</strong> taxa at this level:</p>
+                </div>
+                <div style="display: flex; gap: 15px; margin: 20px 0;">
+                    <button onclick="downloadTaxaComparison('${level}', 'tsv')" style="
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        padding: 12px 20px;
+                        font-size: 14px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                        transition: all 0.3s ease;
+                    ">
+                        📥 Download TSV
+                    </button>
+                    <button onclick="downloadTaxaComparison('${level}', 'excel')" style="
+                        background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        padding: 12px 20px;
+                        font-size: 14px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                        transition: all 0.3s ease;
+                    ">
+                        📊 Download Excel
+                    </button>
+                </div>
+                <div class="stats-info">
+                    <h4>What You'll Get</h4>
+                    <p><strong>Complete Coverage:</strong> Every single taxon at the ${getTaxonomicLevelName(level)} level</p>
+                    <p><strong>Control vs UC Comparison:</strong> Average abundances for each group</p>
+                    <p><strong>Control/UC Ratio:</strong> Shows relative abundance differences</p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li><strong>Ratio > 1:</strong> Higher abundance in Control samples</li>
+                        <li><strong>Ratio < 1:</strong> Higher abundance in UC samples</li>
+                        <li><strong>Ratio = 1:</strong> Similar abundance in both groups</li>
+                    </ul>
+                    <p style="margin-top: 15px; font-size: 13px; color: #666;">
+                        <em>Select a specific taxon below to also see its individual bar chart and AI analysis!</em>
+                    </p>
+                </div>
+            `;
+            
+            console.log('Download section HTML created, appending to results area');
+            resultsArea.appendChild(downloadSection);
+            console.log('Download section appended successfully');
+        }
+
+        function hideDownloadTable() {
+            const resultsArea = document.getElementById('resultsArea');
+            resultsArea.className = 'results-area empty';
+            resultsArea.innerHTML = '<p>Please select a taxonomic level to view the download table</p>';
+        }
+
         async function displaySpecificTaxonResults(level, taxon, resultsArea) {
             resultsArea.className = 'results-area';
             resultsArea.innerHTML = '<p>Loading data for ' + taxon + '...</p>';
@@ -616,7 +701,7 @@
                     console.log('Data type:', typeof data);
                     console.log('Data keys:', Object.keys(data));
                     
-                    displayTaxonBarPlot(data, taxon, resultsArea);
+                    displayTaxonBarPlot(data, taxon, resultsArea, level);
                 } else {
                     console.error('Server response not OK:', response.status, response.statusText);
                     resultsArea.innerHTML = '<p>Error loading data for ' + taxon + '</p>';
@@ -627,7 +712,7 @@
             }
         }
 
-        function displayTaxonBarPlot(data, taxon, resultsArea) {
+        function displayTaxonBarPlot(data, taxon, resultsArea, level) {
             resultsArea.className = 'results-area';
             
             console.log('Creating chart for taxon:', taxon);
@@ -712,12 +797,23 @@
             // Wait a moment for DOM to be ready, then create the chart
             setTimeout(() => {
                 try {
+                    console.log('About to create chart...');
+                    console.log('Canvas element:', canvas);
+                    console.log('Canvas ID:', canvas.id);
+                    
                     const ctx = canvas.getContext('2d');
                     if (ctx) {
+                        console.log('Canvas context obtained successfully');
                         console.log('Creating Chart.js chart with labels:', sampleNames);
                         console.log('And values:', values);
+                        console.log('Chart.js available:', typeof Chart);
                         
-                        new Chart(ctx, {
+                        // Check if Chart.js is loaded
+                        if (typeof Chart === 'undefined') {
+                            throw new Error('Chart.js library is not loaded');
+                        }
+                        
+                        const chart = new Chart(ctx, {
                             type: 'bar',
                             data: {
                                 labels: sampleNames,
@@ -758,12 +854,16 @@
                                 }
                             }
                         });
-                        console.log('Chart created successfully!');
+                        console.log('Chart created successfully!', chart);
                     } else {
                         console.error('Could not get canvas context');
+                        throw new Error('Canvas context is null');
                     }
                 } catch (error) {
                     console.error('Error creating chart:', error);
+                    console.error('Error details:', error.message);
+                    console.error('Error stack:', error.stack);
+                    
                     // Fallback: show data as text
                     chartContainer.innerHTML = `
                         <div class="stats-info">
@@ -772,10 +872,57 @@
                             <ul>
                                 ${sampleNames.map((name, index) => `<li>${name}: ${values[index]}</li>`).join('')}
                             </ul>
+                            <p style="color: #e74c3c; margin-top: 10px;">
+                                <strong>Chart Error:</strong> ${error.message}
+                            </p>
                         </div>
                     `;
                 }
             }, 100);
+            
+            // Add download buttons section
+            const downloadSection = document.createElement('div');
+            downloadSection.className = 'stats-info';
+            downloadSection.style.marginTop = '20px';
+            downloadSection.innerHTML = `
+                <h4>📊 Download Complete Taxonomic Comparison</h4>
+                <p>Get a comprehensive table showing Control/UC ratios for <strong>ALL</strong> taxa at the ${getTaxonomicLevelName(level)} level:</p>
+                <div style="display: flex; gap: 15px; margin-top: 15px;">
+                    <button onclick="downloadTaxaComparison('${level}', 'tsv')" style="
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        padding: 12px 20px;
+                        font-size: 14px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                        transition: all 0.3s ease;
+                    ">
+                        📥 Download TSV
+                    </button>
+                    <button onclick="downloadTaxaComparison('${level}', 'excel')" style="
+                        background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        padding: 12px 20px;
+                        font-size: 14px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                        transition: all 0.3s ease;
+                    ">
+                        📊 Download Excel
+                    </button>
+                </div>
+                <p style="margin-top: 15px; font-size: 13px; color: #666;">
+                    <strong>What you'll get:</strong> A table with every single taxon at this level, showing Control average, UC average, and the Control/UC ratio. 
+                    Ratios > 1 indicate higher abundance in Control samples, ratios < 1 indicate higher abundance in UC samples.
+                </p>
+            `;
+            resultsArea.appendChild(downloadSection);
             
             // Add explanation section
             const explanationSection = document.createElement('div');
@@ -859,7 +1006,7 @@
                         <div class="image-container">
                             <div style="position: relative;">
                                 <img src="${selectedOption.file}" alt="${selectedOption.label}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                                <button class="ai-explanation-btn" onclick="showAIExplanation('${selectedOption.file}', 'alpha_diversity')">
+                                <button class="ai-explanation-btn" onclick="showAIExplanation('${selectedOption.file}', 'alpha_diversity', '${selectedOption.value}')">
                                     🤖 AI Explain
                                 </button>
                             </div>
@@ -880,7 +1027,7 @@
                         <div class="image-container">
                             <div style="position: relative;">
                                 <img src="${selectedOption.file}" alt="${selectedOption.label}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                                <button class="ai-explanation-btn" onclick="showAIExplanation('${selectedOption.file}', 'pcoa')">
+                                <button class="ai-explanation-btn" onclick="showAIExplanation('${selectedOption.file}', 'pcoa', '${selectedOption.value}')">
                                     🤖 AI Explain
                                 </button>
                             </div>
@@ -901,7 +1048,7 @@
                         <div class="image-container">
                             <div style="position: relative;">
                                 <img src="${selectedOption.file}" alt="${selectedOption.label}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                                <button class="ai-explanation-btn" onclick="showAIExplanation('${selectedOption.file}', 'stacked_barplot')">
+                                <button class="ai-explanation-btn" onclick="showAIExplanation('${selectedOption.file}', 'stacked_barplot', '${selectedOption.value}')">
                                     🤖 AI Explain
                                 </button>
                             </div>
@@ -956,8 +1103,8 @@
         }
 
         // AI Explanation Functions
-        function showAIExplanation(filename, plotType, plotData = null) {
-            console.log('showAIExplanation called with:', filename, plotType, plotData);
+        function showAIExplanation(filename, plotType, plotData = null, taxonomicLevel = null) {
+            console.log('showAIExplanation called with:', filename, plotType, plotData, taxonomicLevel);
             
             const modal = document.getElementById('aiModal');
             const modalBody = document.getElementById('aiModalBody');
@@ -977,13 +1124,13 @@
             `;
             
             // Get AI explanation with data
-            getAIExplanation(filename, plotType, plotData);
+            getAIExplanation(filename, plotType, plotData, taxonomicLevel);
             
             // Safety timeout - if nothing happens in 10 seconds, show fallback
             setTimeout(() => {
                 if (modalBody.innerHTML.includes('AI is analyzing')) {
                     console.log('Timeout reached, showing fallback');
-                    const fallbackExplanation = generateFallbackExplanation(plotType, filename, plotData);
+                    const fallbackExplanation = generateFallbackExplanation(plotType, filename, plotData, taxonomicLevel);
                     displayAIExplanation(fallbackExplanation, modalBody, filename);
                 }
             }, 10000);
@@ -994,16 +1141,23 @@
             modal.style.display = 'none';
         }
 
-        async function getAIExplanation(filename, plotType, plotData = null) {
+        async function getAIExplanation(filename, plotType, plotData = null, taxonomicLevel = null) {
             const modalBody = document.getElementById('aiModalBody');
             
             try {
-                console.log('Looking for AI explanation for:', filename, 'plotType:', plotType, 'plotData:', plotData);
+                console.log('Looking for AI explanation for:', filename, 'plotType:', plotType, 'plotData:', plotData, 'taxonomicLevel:', taxonomicLevel);
                 
                 // For taxon plots with data, use real-time AI analysis
                 if (plotType === 'taxon_plot' && plotData) {
                     console.log('Using real-time AI analysis for taxon plot');
                     await callRealTimeAI(plotType, plotData, modalBody);
+                    return;
+                }
+                
+                // For diversity, PCoA, and stacked plots, use real-time AI analysis with extracted data
+                if (plotType in ['alpha_diversity', 'pcoa', 'stacked_barplot']) {
+                    console.log('Using real-time AI analysis for', plotType, 'with taxonomic level:', taxonomicLevel);
+                    await callRealTimeAI(plotType, null, modalBody, taxonomicLevel);
                     return;
                 }
                 
@@ -1037,35 +1191,40 @@
                 
                 // If still no match, show fallback
                 console.log('No AI explanation found, using fallback');
-                const fallbackExplanation = generateFallbackExplanation(plotType, filename, plotData);
+                const fallbackExplanation = generateFallbackExplanation(plotType, filename, plotData, taxonomicLevel);
                 console.log('Fallback explanation:', fallbackExplanation);
                 displayAIExplanation(fallbackExplanation, modalBody, filename);
                 
             } catch (error) {
                 console.error('Error getting AI explanation:', error);
-                const fallbackExplanation = generateFallbackExplanation(plotType, filename, plotData);
+                const fallbackExplanation = generateFallbackExplanation(plotType, filename, plotData, taxonomicLevel);
                 displayAIExplanation(fallbackExplanation, modalBody, filename);
             }
-                }
+        }
         
-        async function callRealTimeAI(plotType, plotData, modalBody) {
-            console.log('Calling real-time AI with data:', plotData);
+        async function callRealTimeAI(plotType, plotData, modalBody, taxonomicLevel = null) {
+            console.log('Calling real-time AI with data:', plotType, plotData, taxonomicLevel);
             
             try {
                 // Prepare form data for CGI
                 const formData = new FormData();
                 formData.append('plot_type', plotType);
-                formData.append('taxon_name', plotData.taxon_name || 'Unknown');
-                formData.append('sample_data', JSON.stringify(plotData.sample_data || {}));
-                formData.append('sample_names', JSON.stringify(plotData.sample_names || []));
-                formData.append('rpm_values', JSON.stringify(plotData.rpm_values || []));
+                
+                if (plotType === 'taxon_plot' && plotData) {
+                    // For taxon plots, include the specific data
+                    formData.append('taxon_name', plotData.taxon_name || 'Unknown');
+                    formData.append('sample_data', JSON.stringify(plotData.sample_data || {}));
+                    formData.append('sample_names', JSON.stringify(plotData.sample_names || []));
+                    formData.append('rpm_values', JSON.stringify(plotData.rpm_values || []));
+                } else if (taxonomicLevel) {
+                    // For other plot types, include taxonomic level
+                    formData.append('taxonomic_level', taxonomicLevel);
+                }
                 
                 console.log('Sending data to AI:', {
                     plot_type: plotType,
-                    taxon_name: plotData.taxon_name,
-                    sample_data: plotData.sample_data,
-                    sample_names: plotData.sample_names,
-                    rpm_values: plotData.rpm_values
+                    taxonomic_level: taxonomicLevel,
+                    plotData: plotData
                 });
                 
                 // Call the CGI endpoint
@@ -1085,21 +1244,21 @@
                     // Create a structured explanation object for display
                     const aiExplanation = {
                         plot_type: plotType,
-                        taxonomic_level: 'taxon_plot',
+                        taxonomic_level: data.taxonomic_level || taxonomicLevel || 'unknown',
                         explanation: data.analysis,
-                        filename: plotData.taxon_name
+                        filename: plotData ? plotData.taxon_name : 'Plot Analysis'
                     };
-                    displayAIExplanation(aiExplanation, modalBody, plotData.taxon_name);
+                    displayAIExplanation(aiExplanation, modalBody, plotData ? plotData.taxon_name : 'Plot Analysis');
                 } else {
                     console.error('AI analysis failed:', data.error);
-                    const fallback = generateFallbackExplanation(plotType, plotData.taxon_name, plotData);
-                    displayAIExplanation(fallback, modalBody, plotData.taxon_name);
+                    const fallback = generateFallbackExplanation(plotType, plotData ? plotData.taxon_name : 'Plot', plotData, taxonomicLevel);
+                    displayAIExplanation(fallback, modalBody, plotData ? plotData.taxon_name : 'Plot Analysis');
                 }
                 
             } catch (error) {
                 console.error('Error calling real-time AI:', error);
-                const fallback = generateFallbackExplanation(plotType, plotData.taxon_name, plotData);
-                displayAIExplanation(fallback, modalBody, plotData.taxon_name);
+                const fallback = generateFallbackExplanation(plotType, plotData ? plotData.taxon_name : 'Plot', plotData, taxonomicLevel);
+                displayAIExplanation(fallback, modalBody, plotData ? plotData.taxon_name : 'Plot Analysis');
             }
         }
         
@@ -1137,7 +1296,7 @@
             `;
         }
 
-        function generateFallbackExplanation(plotType, filename, plotData = null) {
+        function generateFallbackExplanation(plotType, filename, plotData = null, taxonomicLevel = null) {
             // If we have plot data, generate a personalized fallback
             if (plotData && plotType === 'taxon_plot') {
                 return generatePersonalizedTaxonFallback(plotData);
@@ -1153,18 +1312,25 @@
             
             let explanation = fallbackExplanations[plotType] || "This chart shows important information about your gut microbiome.";
             
-            // Try to extract taxonomic level from filename
-            const taxonomicLevels = ["phylum", "class", "order", "family", "genus", "species"];
-            for (const level of taxonomicLevels) {
-                if (filename.toLowerCase().includes(level)) {
-                    explanation += ` We're looking at the ${level} level, which represents ${getTaxonomicDescription(level)}.`;
-                    break;
+            // Use provided taxonomic level or try to extract from filename
+            let level = taxonomicLevel;
+            if (!level) {
+                const taxonomicLevels = ["phylum", "class", "order", "family", "genus", "species"];
+                for (const l of taxonomicLevels) {
+                    if (filename.toLowerCase().includes(l)) {
+                        level = l;
+                        break;
+                    }
                 }
+            }
+            
+            if (level) {
+                explanation += ` We're looking at the ${level} level, which represents ${getTaxonomicDescription(level)}.`;
             }
             
             return {
                 plot_type: plotType,
-                taxonomic_level: null,
+                taxonomic_level: level,
                 explanation: explanation
             };
         }
@@ -1226,6 +1392,63 @@
                 "species": "individual bacterial strains"
             };
             return descriptions[level] || "bacterial groups";
+        }
+        
+        function getTaxonomicLevelName(level) {
+            const levelNames = {
+                "2": "Phylum",
+                "3": "Class", 
+                "4": "Order",
+                "5": "Family",
+                "6": "Genus",
+                "7": "Species"
+            };
+            return levelNames[level] || "Taxonomic";
+        }
+        
+        async function downloadTaxaComparison(level, format) {
+            try {
+                const serverUrl = window.location.protocol === 'file:' ? 'http://localhost:8001' : '';
+                const url = `${serverUrl}/cgi-bin/taxa_comparison.py?command=get_comparison&level=${level}&format=${format}`;
+                
+                console.log('Downloading taxa comparison from:', url);
+                
+                const response = await fetch(url);
+                
+                if (response.ok) {
+                    if (format === 'tsv') {
+                        // Handle TSV download
+                        const blob = new Blob([await response.text()], { type: 'text/tab-separated-values' });
+                        const downloadUrl = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = downloadUrl;
+                        a.download = `taxa_comparison_${getTaxonomicLevelName(level).toLowerCase()}.tsv`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(downloadUrl);
+                    } else if (format === 'excel') {
+                        // Handle Excel download
+                        const blob = await response.blob();
+                        const downloadUrl = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = downloadUrl;
+                        a.download = `taxa_comparison_${getTaxonomicLevelName(level).toLowerCase()}.xlsx`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(downloadUrl);
+                    }
+                    
+                    console.log(`${format.toUpperCase()} download completed successfully`);
+                } else {
+                    console.error('Download failed:', response.status, response.statusText);
+                    alert(`Download failed: ${response.statusText}`);
+                }
+            } catch (error) {
+                console.error('Error downloading taxa comparison:', error);
+                alert('Error downloading file. Please try again.');
+            }
         }
 
         // Close modal when clicking outside
