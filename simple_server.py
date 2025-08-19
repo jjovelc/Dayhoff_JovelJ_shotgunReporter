@@ -35,6 +35,8 @@ class TaxaRequestHandler(http.server.SimpleHTTPRequestHandler):
         
         if path == '/cgi-bin/ai_analyze.py':
             self.handle_ai_analysis_request()
+        elif path == '/cgi-bin/ai_summary.py':
+            self.handle_ai_summary_request()
         else:
             self.send_error(405, "Method not allowed")
     
@@ -79,7 +81,12 @@ class TaxaRequestHandler(http.server.SimpleHTTPRequestHandler):
         try:
             # Import and use the AI analyzer
             import sys
+            import importlib
             sys.path.append(os.getcwd())
+            
+            # Force reload the module to get latest changes
+            if 'ai_realtime_analyzer' in sys.modules:
+                importlib.reload(sys.modules['ai_realtime_analyzer'])
             
             from ai_realtime_analyzer import RealTimeMicrobiomeAnalyzer
             
@@ -257,7 +264,12 @@ class TaxaRequestHandler(http.server.SimpleHTTPRequestHandler):
         try:
             # Import and use the AI analyzer
             import sys
+            import importlib
             sys.path.append(os.getcwd())
+            
+            # Force reload the module to get latest changes
+            if 'ai_realtime_analyzer' in sys.modules:
+                importlib.reload(sys.modules['ai_realtime_analyzer'])
             
             from ai_realtime_analyzer import RealTimeMicrobiomeAnalyzer
             
@@ -272,7 +284,10 @@ class TaxaRequestHandler(http.server.SimpleHTTPRequestHandler):
             taxonomic_level = level_mapping.get(level, "family")
             
             # Generate TSV content
+            print(f"DEBUG: Calling generate_taxa_comparison_tsv for level: {taxonomic_level}", file=sys.stderr)
             tsv_content = analyzer.generate_taxa_comparison_tsv(taxonomic_level)
+            print(f"DEBUG: TSV content length: {len(tsv_content) if tsv_content else 0}", file=sys.stderr)
+            print(f"DEBUG: TSV first line: {tsv_content.split(chr(10))[0] if tsv_content else 'None'}", file=sys.stderr)
             
             if not tsv_content:
                 self.send_error_response('No data available for this taxonomic level')
@@ -297,7 +312,12 @@ class TaxaRequestHandler(http.server.SimpleHTTPRequestHandler):
         try:
             # Import and use the AI analyzer
             import sys
+            import importlib
             sys.path.append(os.getcwd())
+            
+            # Force reload the module to get latest changes
+            if 'ai_realtime_analyzer' in sys.modules:
+                importlib.reload(sys.modules['ai_realtime_analyzer'])
             
             from ai_realtime_analyzer import RealTimeMicrobiomeAnalyzer
             
@@ -350,6 +370,109 @@ class TaxaRequestHandler(http.server.SimpleHTTPRequestHandler):
                 
         except Exception as e:
             return {'error': str(e)}
+    
+    def handle_ai_summary_request(self):
+        """Handle AI summary generation requests"""
+        try:
+            # Get content length
+            content_length = int(self.headers.get('Content-Length', 0))
+            if content_length > 0:
+                # Read POST data
+                post_data = self.rfile.read(content_length).decode('utf-8')
+                
+                # Parse form data (simple parsing for multipart/form-data)
+                form_data = {}
+                if 'multipart/form-data' in self.headers.get('Content-Type', ''):
+                    # Parse multipart form data
+                    boundary = self.headers.get('Content-Type').split('boundary=')[1]
+                    parts = post_data.split('--' + boundary)
+                    
+                    for part in parts:
+                        if 'name=' in part and 'Content-Type:' not in part:
+                            lines = part.strip().split('\r\n')
+                            if len(lines) >= 3:
+                                name_line = lines[0]
+                                value = lines[-1]
+                                
+                                if 'name="' in name_line:
+                                    name = name_line.split('name="')[1].split('"')[0]
+                                    form_data[name] = value
+                
+                # Call AI summary generator
+                result = self.run_ai_summary_generator(form_data)
+                self.send_json_response(result)
+            else:
+                self.send_error_response('No data received')
+                
+        except Exception as e:
+            self.send_error_response(f'AI summary error: {str(e)}')
+    
+    def run_ai_summary_generator(self, form_data):
+        """Run the AI summary generator with form data"""
+        try:
+            # Import and use the AI analyzer
+            import sys
+            import importlib
+            sys.path.append(os.getcwd())
+            
+            # Force reload the module to get latest changes
+            if 'ai_realtime_analyzer' in sys.modules:
+                importlib.reload(sys.modules['ai_realtime_analyzer'])
+            
+            from ai_realtime_analyzer import RealTimeMicrobiomeAnalyzer
+            
+            analyzer = RealTimeMicrobiomeAnalyzer()
+            
+            taxonomic_level = form_data.get('taxonomic_level', '')
+            report_type = form_data.get('report_type', 'technical')
+            
+            if not taxonomic_level:
+                return {'success': False, 'error': 'Missing taxonomic_level parameter'}
+            
+            # Generate AI summary
+            ai_summary = analyzer.generate_ai_summary(taxonomic_level, report_type)
+            
+            if not ai_summary or ai_summary.startswith("Error"):
+                return {'success': False, 'error': ai_summary}
+            
+            # Generate PDF report
+            try:
+                # Import the PDF generation function
+                import sys
+                sys.path.append(os.path.join(os.getcwd(), 'cgi-bin'))
+                
+                # Import the PDF creation function from ai_summary.py
+                from ai_summary import create_pdf_report
+                
+                # Create PDF
+                pdf_content = create_pdf_report(analyzer, taxonomic_level, report_type, ai_summary)
+                
+                if pdf_content:
+                    # Encode PDF content
+                    import base64
+                    pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
+                    
+                    return {
+                        'success': True,
+                        'message': f'AI summary generated successfully for {taxonomic_level} level',
+                        'report_type': report_type,
+                        'pdf_data': pdf_base64
+                    }
+                else:
+                    return {'success': False, 'error': 'Failed to generate PDF'}
+                    
+            except Exception as e:
+                print(f"PDF generation error: {e}", file=sys.stderr)
+                # Fallback to text summary if PDF generation fails
+                return {
+                    'success': True,
+                    'message': f'AI summary generated successfully for {taxonomic_level} level (text only)',
+                    'report_type': report_type,
+                    'summary': ai_summary
+                }
+            
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
     
     def send_json_response(self, data):
         """Send JSON response"""
