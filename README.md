@@ -4,6 +4,16 @@
 
 The pipeline starts with a Kraken2 results table like `all_child-UC_kraken2_250616.tsv`, on which `parse_taxa.py` script is run. This will split such a table into other tables divided by taxonomic level. On such tables, script `alpha-beta_diversity_norm.R` is run to generate diversity plots and stacked bar plots. File `all_krona_plots.html` is required to produce the krona plots presented here.
 
+Samples included in the demo correspond to the following samples from project PRJNA759642:
+
+|sample     | group	  | srr         |
+|-----------|---------|-------------|
+|PedUC47	  | UC	    | SRR15702647 |
+|PedUC58	  | UC	    | SRR15702658 |
+|PedCtrl59	| Control |	SRR15702659 |
+|PedUC60	  | UC	    | SRR15702660 |
+
+
 ## 🚀 **New AI-Enhanced Features**
 
 This pipeline now includes **advanced AI-powered analysis** capabilities that provide intelligent, data-driven insights into microbiome data:

@@ -665,7 +665,7 @@ def main():
     
     with socketserver.TCPServer(("", PORT), TaxaRequestHandler) as httpd:
         print(f"Server running at http://localhost:{PORT}")
-        print(f"Open index.html in your browser to use the interface")
+        print(f"Open index_ai_enhanced.html in your browser to use the interface")
         print("Press Ctrl+C to stop the server")
         try:
             httpd.serve_forever()
