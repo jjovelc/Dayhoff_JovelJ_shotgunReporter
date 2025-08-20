@@ -1,118 +1,168 @@
-# shotgunReporter
+# Microbiome Analysis Pipeline - AI Enhanced
 
 ## Overview
-A web-based microbiome analysis and visualization tool that provides interactive exploration of shotgun metagenomic sequencing data with AI-powered insights. This tool enables researchers to analyze and interpret complex microbiome datasets through intuitive visualizations and intelligent data interpretation.
 
-Data included is from this paper in [Scientific reports](https://www.nature.com/articles/s41598-022-07995-7)
+The pipeline starts with a Kraken2 results table like `all_child-UC_kraken2_250616.tsv`, on which `parse_taxa.py` script is run. This will split such a table into other tables divided by taxonomic level. On such tables, script `alpha-beta_diversity_norm.R` is run to generate diversity plots and stacked bar plots. File `all_krona_plots.html` is required to produce the krona plots presented here.
 
-## Features
+## 🚀 **New AI-Enhanced Features**
 
-### Left Sidebar
-- **Analysis Type Dropdown**: Choose between four main analysis categories:
-  - Alpha Diversity (Shannon index only)
-  - Beta Diversity (Bray-Curtis distance only)
-  - Stacked Bar Plots
-  - Krona Plots
-  - **Visualize Specific Taxon** (NEW!)
+This pipeline now includes **advanced AI-powered analysis** capabilities that provide intelligent, data-driven insights into microbiome data:
 
-### Dynamic Second Dropdown
-- **Specific Options**: Once you select an analysis type, the second dropdown populates with available options:
-  - **Alpha Diversity**: Shannon diversity index for each taxonomic level (Phylum through Species)
-  - **Beta Diversity**: PCoA plots with Bray-Curtis distance for each taxonomic level
-  - **Stacked Bar Plots**: Top 20 most abundant taxa plots for each taxonomic level (Phylum through Species)
-  - **Krona Plots**: Interactive hierarchical visualizations of all samples combined
-  - **Specific Taxon Analysis**: Taxonomic levels (Phylum, Class, Order, Family, Genus, Species) for deep-dive analysis
+### **🤖 AI-Powered Plot Explanations**
+- **Dynamic AI Analysis**: Real-time AI explanations for all plot types (alpha diversity, beta diversity, stacked barplots, specific taxon)
+- **Context-Aware Insights**: AI analyzes actual data values and provides specific, relevant interpretations
+- **Multiple Plot Types**: Works with alpha diversity, beta diversity (PCoA), stacked barplots, and specific taxon visualizations
+- **Intelligent Fallbacks**: Graceful degradation when AI services are unavailable
 
-### Main Content Area
-- Displays the selected plot/image
-- Shows analysis information and descriptions
-- Responsive design that works on different screen sizes
+### **📊 AI-Generated Summary Reports**
+- **Comprehensive Analysis**: Generate detailed reports with diversity analysis and heatmaps
+- **Two Report Types**: 
+  - **Lay Summary**: Easy-to-understand reports for non-specialists
+  - **Technical Summary**: Scientific reports with detailed analysis
+- **User-Selectable Taxonomic Levels**: Choose from Phylum, Class, Order, Family, Genus, or Species level
+- **PDF Output**: Professional reports with embedded visualizations and tables
+- **Top 20 Taxa Analysis**: Identify most distinct taxa between control and UC samples
 
-### Specific Taxon Visualization (NEW!)
-- **Interactive Bar Charts**: Customizable bar plots showing individual taxon abundance across samples
-- **Data Normalization**: Converts raw read counts to Reads Per Million (RPM) for cross-sample comparison
-- **Color Customization**: Color pickers for Control vs. UC sample groups
-- **Export Options**: Download plots as PNG and PDF with clean white backgrounds
-- **Sample Comparison**: Control samples grouped together, UC samples shown individually
-- **Layman Explanations**: Clear explanations of what each plot shows and how to interpret results
+### **📥 Enhanced Data Export**
+- **Taxonomic Comparison Tables**: Download TSV/Excel files with Control vs UC abundance ratios
+- **Standard Deviation Included**: UC sample variability metrics for better statistical analysis
+- **Level-Specific Filtering**: Tables contain only taxa at the selected taxonomic level
+- **Clean Taxon Names**: Proper taxonomic prefixes (f__, g__, s__) with readable formatting
 
-## How to Use
+### **🎨 Modern User Interface**
+- **Professional Design**: Clean, modern interface with intuitive navigation
+- **Responsive Layout**: Works on different screen sizes and devices
+- **Loading Indicators**: Visual feedback during AI processing with spinning wheels
+- **Error Handling**: Graceful error recovery and user-friendly messages
 
-### Basic Analysis
-1. **Open the webpage**: Open `index.html` in your web browser
-2. **Select Analysis Type**: Choose from the first dropdown (Alpha Diversity, Beta Diversity, Stacked Bar Plots, or Krona Plots)
-3. **Select Specific Option**: Choose the specific analysis/plot you want to view from the second dropdown
-4. **View Results**: The selected plot will appear in the main content area with explanatory text
+## 🔧 **Technical Architecture**
 
-### Specific Taxon Analysis
-1. **Select "Visualize Specific Taxon"** from the Analysis Type dropdown
-2. **Choose Taxonomic Level**: Select Phylum, Class, Order, Family, Genus, or Species
-3. **Select Individual Taxon**: Choose from the available taxa at that level
-4. **Customize Colors**: Use color pickers to set Control and UC sample colors
-5. **Export Results**: Download the interactive chart as PNG or PDF
+### **Backend Services**
+- **Custom CGI Server**: `simple_server.py` handles all requests on port 8001
+- **AI Analysis Engine**: `ai_realtime_analyzer.py` provides real-time data analysis
+- **PDF Generation**: `ai_summary.py` creates professional reports with plots and tables
+- **Data Processing**: Efficient handling of large microbiome datasets
 
-## File Structure
-The webpage expects the following files to be in the same directory:
+### **AI Integration**
+- **Ollama Support**: Integration with local Ollama for enhanced AI analysis
+- **GPT-OSS-20B Model**: Advanced language model for microbiome interpretation
+- **Fallback Mechanisms**: Basic analysis when AI services are unavailable
+- **Real-time Processing**: Dynamic analysis based on actual data values
 
-### Static Plots (PNG)
-- Alpha diversity plots: `alpha_diversity_[level]_Shannon.png`
-- Beta diversity plots: `pcoa_[level]_bray_with_stats.png`
-- Stacked bar plots: `stacked_barplot_[level]_top20.png`
-- Krona plots: `all_krona_plots.html`
+### **Data Formats**
+- **Input**: Kraken2 TSV tables with taxonomic classifications
+- **Output**: PNG plots, HTML reports, PDF summaries, TSV/Excel exports
+- **Standards**: Compatible with standard microbiome analysis workflows
 
-### Data Files (TSV)
-- Kraken2 taxonomic abundance files: `all_child-UC_kraken2_250616_level_[2-7].tsv`
-- Sample metadata: `metadata.tsv`
+## 📁 **File Structure**
 
-### Python Backend
-- `simple_server.py`: HTTP server for serving the interface and handling API calls
-- `extract_taxa_simple.py`: Data processing script for taxonomic analysis
+```
+Dayhoff_JovelJ_shotgunReporter/
+├── README.md                           # This file - main documentation
+├── README_AI_Integration.md            # Detailed AI feature documentation
+├── README_specific_taxon.md            # Specific taxon analysis guide
+├── index_ai_enhanced.html             # Main AI-enhanced interface
+├── simple_server.py                    # Custom CGI server
+├── ai_realtime_analyzer.py            # AI analysis engine
+├── cgi-bin/
+│   ├── ai_analyze.py                  # AI plot explanation endpoint
+│   ├── ai_summary.py                  # AI summary report generator
+│   ├── extract_taxa.py                # Taxa extraction service
+│   └── taxa_comparison.py            # Comparison table generator
+├── Data Processing Scripts/
+│   ├── parse_taxa.py                  # Taxonomic level splitting
+│   ├── alpha-beta_diversity_norm.R    # Diversity analysis
+│   └── convert_tsv2xlsx.py           # Format conversion utilities
+├── Generated Plots/                    # All visualization outputs
+├── Generated Reports/                  # AI-generated PDF summaries
+└── requirements.txt                    # Python dependencies
+```
 
-## Technical Details
-- **Frontend**: HTML5, CSS3, JavaScript with responsive design
-- **Charts**: Chart.js for interactive bar plots and data visualization
-- **Backend**: Python HTTP server with data processing capabilities
-- **Data Processing**: Kraken2 TSV parsing and RPM normalization
-- **Export**: PNG and PDF download with white background support
-- **Error Handling**: Graceful fallback and user-friendly error messages
+## 🚀 **Quick Start**
 
-## Next Steps for Improvement
-This is a working prototype that can be enhanced with:
+### **1. Setup Environment**
+```bash
+# Install Python dependencies
+pip install -r requirements.txt
 
-### AI Integration (Coming Soon!)
-- **GPT-OSS-20B Integration**: Local AI inference for intelligent data interpretation
-- **Smart Plot Analysis**: AI-powered explanations of microbiome patterns and significance
-- **Natural Language Queries**: Ask questions about your data in plain English
-- **Intelligent Recommendations**: AI suggests related taxa to investigate and potential biomarkers
+# Optional: Install Ollama for enhanced AI analysis
+# Follow instructions at https://ollama.ai
+ollama pull gpt-oss:20b
+```
 
-### Enhanced Features
-- Statistical summary tables and significance testing
-- Advanced interactive plots with Plotly or D3.js
-- Search and filtering capabilities across taxonomic levels
-- User authentication and data management
-- Database integration for larger datasets
-- Real-time data updates and collaboration features
+### **2. Start the Server**
+```bash
+python simple_server.py
+# Server runs at http://localhost:8001
+```
 
-## Browser Compatibility
-- Chrome/Edge (recommended)
-- Firefox
-- Safari
-- Mobile browsers (responsive design)
+### **3. Access the Interface**
+- Open `http://localhost:8001/index_ai_enhanced.html`
+- Select analysis type and options
+- Use AI-powered features for enhanced insights
+- Generate comprehensive reports and export data
 
-## Getting Started
+## 🔍 **Key Features**
 
-### Quick Start
-1. **Start the server**: Run `python3 simple_server.py` in your terminal
-2. **Open browser**: Navigate to `http://localhost:8000/index.html`
-3. **Start analyzing**: Use the interface to explore your microbiome data
+### **Core Analysis**
+- **Alpha Diversity**: Shannon diversity analysis across taxonomic levels
+- **Beta Diversity**: PCoA analysis with statistical testing
+- **Stacked Barplots**: Top 20 taxa visualization
+- **Krona Plots**: Interactive taxonomic hierarchy exploration
+- **Specific Taxon Analysis**: Detailed analysis of individual taxa
 
-### Server Requirements
-- Python 3.6+
-- No external dependencies (uses only standard library)
-- Port 8000 must be available
+### **AI Enhancements**
+- **Smart Explanations**: Context-aware plot interpretations
+- **Comprehensive Reports**: Professional PDF summaries with visualizations
+- **Data Export**: Enhanced tables with statistical metrics
+- **User Control**: Selectable taxonomic levels for all analyses
 
-### Data Requirements
-- Kraken2 TSV files must be present in the project directory
-- Static PNG plots should be in the same directory as `index.html`
-- Server will automatically process and serve the data
+## 📊 **Data Requirements**
+
+### **Input Format**
+- Kraken2 output tables in TSV format
+- Taxonomic classifications with standard prefixes (k__, p__, c__, o__, f__, g__, s__)
+- Sample metadata for group comparisons (Control vs UC)
+
+### **Output Quality**
+- High-resolution plots (300 DPI)
+- Professional PDF reports
+- Exportable data tables
+- Interactive visualizations
+
+## 🤝 **Contributing**
+
+This pipeline is designed to be extensible and modular. Key areas for enhancement:
+- Additional AI models and analysis types
+- New visualization formats
+- Enhanced statistical analysis
+- Integration with other microbiome analysis tools
+
+## 📚 **Documentation**
+
+- **README_AI_Integration.md**: Detailed AI feature documentation
+- **README_specific_taxon.md**: Specific taxon analysis guide
+- **Code Comments**: Comprehensive inline documentation
+- **Example Outputs**: Sample reports and visualizations
+
+## 🔬 **Scientific Applications**
+
+This pipeline is designed for:
+- **Microbiome Research**: Comprehensive analysis of microbial communities
+- **Clinical Studies**: Control vs treatment group comparisons
+- **Educational Use**: Clear visualizations and explanations
+- **Publication Ready**: High-quality figures and statistical analysis
+
+## 📞 **Support**
+
+For technical support or feature requests:
+- Check the documentation files
+- Review code comments for implementation details
+- Test with sample data to verify functionality
+
+---
+
+**Version**: AI-Enhanced v2.0  
+**Last Updated**: August 2025  
+**Features**: AI-powered analysis, comprehensive reporting, enhanced data export
 
