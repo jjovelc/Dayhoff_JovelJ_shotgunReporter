@@ -287,6 +287,156 @@
             transform: translateX(5px);
         }
         
+        /* Citation Info Button and Popup */
+        .citation-info-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .citation-info-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+        
+        .citation-icon {
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            font-family: Arial, sans-serif;
+        }
+        
+        .citation-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        
+        .citation-popup.show {
+            display: flex;
+        }
+        
+        .citation-content {
+            background: white;
+            border-radius: 12px;
+            padding: 0;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            animation: popupSlideIn 0.3s ease-out;
+        }
+        
+        @keyframes popupSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .citation-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .citation-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+        
+        .citation-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.2s ease;
+        }
+        
+        .citation-close:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .citation-body {
+            padding: 25px;
+        }
+        
+        .citation-body p {
+            margin: 0 0 15px 0;
+            line-height: 1.6;
+            color: #374151;
+        }
+        
+        .citation-link {
+            display: inline-block;
+            color: #3b82f6;
+            text-decoration: none;
+            padding: 10px 15px;
+            background-color: #f3f4f6;
+            border-radius: 8px;
+            margin: 15px 0;
+            word-break: break-all;
+            transition: all 0.2s ease;
+        }
+        
+        .citation-link:hover {
+            background-color: #e5e7eb;
+            color: #1d4ed8;
+            text-decoration: underline;
+        }
+        
+        .citation-details {
+            background-color: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .citation-details p {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+        }
+        
+        .citation-details p:last-child {
+            margin-bottom: 0;
+        }
+        
         .spinning-wheel {
             width: 40px;
             height: 40px;
@@ -727,6 +877,32 @@
                 <div class="ai-loading">
                     <div class="spinner"></div>
                     <p>AI is analyzing your microbiome plot...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Citation Info Button -->
+    <div class="citation-info-btn" onclick="showCitationInfo()">
+        <span class="citation-icon">?</span>
+    </div>
+
+    <!-- Citation Info Popup -->
+    <div class="citation-popup" id="citationPopup">
+        <div class="citation-content">
+            <div class="citation-header">
+                <h3>📚 Data Source Citation</h3>
+                <button class="citation-close" onclick="hideCitationInfo()">&times;</button>
+            </div>
+            <div class="citation-body">
+                <p>Data used in this demo comes from SRA project <strong>PRJNA759642</strong> published at:</p>
+                <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9018687/" target="_blank" class="citation-link">
+                    https://pmc.ncbi.nlm.nih.gov/articles/PMC9018687/
+                </a>
+                <div class="citation-details">
+                    <p><strong>Study:</strong> 16S rRNA and metagenomic shotgun sequencing data revealed consistent patterns of gut microbiome signature in pediatric ulcerative colitis</p>
+                    <p><strong>Authors:</strong> Wenxuan Zuo, Beibei Wang, Xin Bai, et al.</p>
+                    <p><strong>Journal:</strong> Scientific Reports (2022)</p>
                 </div>
             </div>
         </div>
@@ -1942,6 +2118,38 @@
                 alert('Please allow pop-ups to view the help documentation.');
             }
         }
+        
+        // Citation Info Functions
+        function showCitationInfo() {
+            const popup = document.getElementById('citationPopup');
+            popup.classList.add('show');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+        
+        function hideCitationInfo() {
+            const popup = document.getElementById('citationPopup');
+            popup.classList.remove('show');
+            document.body.style.overflow = ''; // Restore scrolling
+        }
+        
+        // Close popup when clicking outside
+        document.addEventListener('click', function(event) {
+            const popup = document.getElementById('citationPopup');
+            const btn = document.querySelector('.citation-info-btn');
+            
+            if (popup.classList.contains('show') && 
+                !popup.contains(event.target) && 
+                !btn.contains(event.target)) {
+                hideCitationInfo();
+            }
+        });
+        
+        // Close popup with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                hideCitationInfo();
+            }
+        });
         
         async function generateAISummary(level, reportType) {
             try {

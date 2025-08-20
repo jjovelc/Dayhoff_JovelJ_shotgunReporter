@@ -90,6 +90,25 @@ pip install -r requirements.txt
 ollama pull gpt-oss:20b
 ```
 
+### **🚀 For Collaborators (Quick Setup)**
+If you received this project folder from a colleague:
+
+```bash
+# 1. Navigate to the project folder
+cd Dayhoff_JovelJ_shotgunReporter
+
+# 2. Install required Python packages
+pip install -r requirements.txt
+
+# 3. Start the server
+python simple_server.py
+
+# 4. Open your browser and go to:
+# http://localhost:8001/index_ai_enhanced.html
+```
+
+**That's it!** The application will be running and ready to use.
+
 ### **2. AI Setup (Optional but Recommended)**
 For enhanced AI analysis capabilities, install and run Ollama with the gpt-oss:20b model:
 
@@ -144,6 +163,21 @@ python simple_server.py
 - Taxonomic classifications with standard prefixes (k__, p__, c__, o__, f__, g__, s__)
 - Sample metadata for group comparisons (Control vs UC)
 
+## 💻 **System Requirements for Collaborators**
+
+### **Required Software**
+- **Python 3.9 or higher** (check with `python --version`)
+- **pip** (Python package installer, usually comes with Python)
+
+### **Operating Systems**
+- ✅ **macOS** (tested and working)
+- ✅ **Linux** (should work with Python 3.9+)
+- ⚠️ **Windows** (may need adjustments for paths)
+
+### **Browser**
+- **Any modern web browser** (Chrome, Firefox, Safari, Edge)
+- **JavaScript enabled** (required for the interface)
+
 ### **Output Quality**
 - High-resolution plots (300 DPI)
 - Professional PDF reports
@@ -157,6 +191,40 @@ This pipeline is designed to be extensible and modular. Key areas for enhancemen
 - New visualization formats
 - Enhanced statistical analysis
 - Integration with other microbiome analysis tools
+
+## 🔧 **Troubleshooting for Collaborators**
+
+### **Common Issues & Solutions**
+
+#### **"Port 8001 already in use" Error**
+```bash
+# Find and kill the process using port 8001
+lsof -i :8001
+kill -9 <PID>
+
+# Or use a different port by editing simple_server.py
+# Change PORT = 8001 to PORT = 8002
+```
+
+#### **"Module not found" Errors**
+```bash
+# Make sure you're in the project directory
+pwd  # Should show path ending with Dayhoff_JovelJ_shotgunReporter
+
+# Reinstall requirements
+pip install -r requirements.txt --force-reinstall
+```
+
+#### **"Permission denied" Errors**
+```bash
+# On macOS/Linux, you might need:
+chmod +x simple_server.py
+```
+
+#### **Browser shows "Connection refused"**
+- Make sure the server is running (`python simple_server.py`)
+- Check that you're using `http://localhost:8001` (not `https://`)
+- Verify the port number matches what's in `simple_server.py`
 
 ## 📚 **Documentation**
 
