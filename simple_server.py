@@ -24,6 +24,9 @@ class TaxaRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_taxa_request(query)
         elif path == '/cgi-bin/taxa_comparison.py':
             self.handle_taxa_comparison_request(query)
+        elif path.endswith('.md'):
+            # Handle markdown files with proper content type
+            self.serve_markdown_file(path)
         else:
             # Serve static files normally
             super().do_GET()
@@ -39,6 +42,155 @@ class TaxaRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_ai_summary_request()
         else:
             self.send_error(405, "Method not allowed")
+    
+    def serve_markdown_file(self, path):
+        """Serve markdown files as rendered HTML"""
+        try:
+            # Remove leading slash and get file path
+            file_path = path.lstrip('/')
+            
+            # Check if file exists
+            if not os.path.exists(file_path):
+                self.send_error(404, "File not found")
+                return
+            
+            # Read the markdown content
+            with open(file_path, 'r', encoding='utf-8') as f:
+                markdown_content = f.read()
+            
+            # Convert markdown to HTML
+            import markdown
+            html_content = markdown.markdown(markdown_content, extensions=['tables', 'fenced_code', 'codehilite'])
+            
+            # Create a complete HTML document with proper styling
+            full_html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{os.path.basename(file_path)} - Documentation</title>
+    <style>
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+        }}
+        .container {{
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }}
+        h1, h2, h3, h4, h5, h6 {{
+            color: #2c3e50;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }}
+        h1 {{
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }}
+        h2 {{
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 8px;
+        }}
+        code {{
+            background-color: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            font-size: 0.9em;
+        }}
+        pre {{
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            border-left: 4px solid #3498db;
+        }}
+        pre code {{
+            background: none;
+            padding: 0;
+        }}
+        blockquote {{
+            border-left: 4px solid #3498db;
+            margin: 20px 0;
+            padding: 10px 20px;
+            background-color: #ecf0f1;
+            font-style: italic;
+        }}
+        table {{
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }}
+        th, td {{
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }}
+        th {{
+            background-color: #3498db;
+            color: white;
+        }}
+        tr:nth-child(even) {{
+            background-color: #f8f9fa;
+        }}
+        ul, ol {{
+            padding-left: 20px;
+        }}
+        li {{
+            margin: 8px 0;
+        }}
+        a {{
+            color: #3498db;
+            text-decoration: none;
+        }}
+        a:hover {{
+            text-decoration: underline;
+        }}
+        .header {{
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 20px;
+            margin: -40px -40px 30px -40px;
+            border-radius: 12px 12px 0 0;
+        }}
+        .header h1 {{
+            margin: 0;
+            border: none;
+            padding: 0;
+        }}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 {os.path.basename(file_path)}</h1>
+        </div>
+
+        {html_content}
+    </div>
+</body>
+</html>"""
+            
+            # Send response
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
+            self.send_header('Content-Length', str(len(full_html.encode('utf-8'))))
+            self.end_headers()
+            
+            # Write HTML content
+            self.wfile.write(full_html.encode('utf-8'))
+            
+        except Exception as e:
+            print(f"Error serving markdown file {path}: {e}")
+            self.send_error(500, f"Internal server error: {e}")
     
     def handle_ai_analysis_request(self):
         """Handle AI analysis requests"""

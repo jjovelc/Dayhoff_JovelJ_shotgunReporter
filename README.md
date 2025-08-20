@@ -90,13 +90,33 @@ pip install -r requirements.txt
 ollama pull gpt-oss:20b
 ```
 
-### **2. Start the Server**
+### **2. AI Setup (Optional but Recommended)**
+For enhanced AI analysis capabilities, install and run Ollama with the gpt-oss:20b model:
+
+```bash
+# Install Ollama (macOS)
+curl -fsSL https://ollama.ai/install.sh | sh
+
+# Pull the model
+ollama pull gpt-oss:20b
+
+# Start Ollama service
+ollama serve
+```
+
+**Note:** The system will work without Ollama, but will provide basic summaries instead of AI-generated insights. The AI features include:
+- Dynamic plot explanations
+- Comprehensive analysis reports
+- Enhanced data interpretation
+- Professional PDF generation
+
+### **3. Start the Server**
 ```bash
 python simple_server.py
 # Server runs at http://localhost:8001
 ```
 
-### **3. Access the Interface**
+### **4. Access the Interface**
 - Open `http://localhost:8001/index_ai_enhanced.html`
 - Select analysis type and options
 - Use AI-powered features for enhanced insights
